@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+node_modules/
+.env
+# Drawings, models and solver outputs: data lives in the Data Fabric (plan Appendix A). Repo rule: never in git.
+# Scans (PNG/TIFF/JPEG) and PDFs are not excluded by extension; keep golden data only under eval/golden/data/.
+eval/golden/data/
+*.dwg
+*.dxf
+*.step
+*.stp
+*.stl
+*.igs
+*.iges
+*.frd
+!eval/golden/fixtures/**

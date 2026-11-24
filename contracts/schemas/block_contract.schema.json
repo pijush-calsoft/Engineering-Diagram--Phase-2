@@ -1,0 +1,48 @@
+{
+  "description": "Body of ``GET /contract``: accepts, produces, schema versions (section 3).",
+  "properties": {
+    "accepts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Accepts",
+      "type": "array"
+    },
+    "contract_version": {
+      "default": "0.1.0",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "produces": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Produces",
+      "type": "array"
+    },
+    "schema_versions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "title": "Schema Versions",
+      "type": "object"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "accepts",
+    "produces"
+  ],
+  "title": "BlockContract",
+  "type": "object"
+}

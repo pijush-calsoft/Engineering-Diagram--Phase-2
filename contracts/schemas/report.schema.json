@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "NumericClaim": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "run_store_ref": {
+          "title": "Run Store Ref",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "value",
+        "run_store_ref"
+      ],
+      "title": "NumericClaim",
+      "type": "object"
+    },
+    "ReportSection": {
+      "properties": {
+        "claim_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Claim Ids",
+          "type": "array"
+        },
+        "key": {
+          "enum": [
+            "summary",
+            "inputs",
+            "model",
+            "margins",
+            "envelope",
+            "flags",
+            "assumptions"
+          ],
+          "title": "Key",
+          "type": "string"
+        },
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "title": "ReportSection",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "claims": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/NumericClaim"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "format": {
+      "enum": [
+        "pdf",
+        "docx"
+      ],
+      "title": "Format",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sections": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ReportSection"
+      },
+      "title": "Sections",
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_id",
+    "format"
+  ],
+  "title": "Report",
+  "type": "object"
+}

@@ -1,0 +1,280 @@
+{
+  "$defs": {
+    "GeometryEntity": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "default": {},
+          "title": "Data",
+          "type": "object"
+        },
+        "kind": {
+          "enum": [
+            "line",
+            "arc",
+            "circle",
+            "spline",
+            "text",
+            "dimension"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "locator": {
+          "$ref": "#/$defs/SourceLocator"
+        }
+      },
+      "required": [
+        "kind",
+        "locator"
+      ],
+      "title": "GeometryEntity",
+      "type": "object"
+    },
+    "SourceLocator": {
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "file_id": {
+          "title": "File Id",
+          "type": "string"
+        },
+        "handle": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Handle"
+        },
+        "layer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layer"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "view": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "View"
+        }
+      },
+      "required": [
+        "file_id",
+        "version",
+        "confidence"
+      ],
+      "title": "SourceLocator",
+      "type": "object"
+    },
+    "TitleBlock": {
+      "properties": {
+        "material": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TitleBlockField"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "part_number": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TitleBlockField"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TitleBlockField"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TitleBlockField"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tolerances": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TitleBlockField"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "units": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TitleBlockField"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "TitleBlock",
+      "type": "object"
+    },
+    "TitleBlockField": {
+      "properties": {
+        "locator": {
+          "$ref": "#/$defs/SourceLocator"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "locator"
+      ],
+      "title": "TitleBlockField",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "entities": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/GeometryEntity"
+      },
+      "title": "Entities",
+      "type": "array"
+    },
+    "scale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scale"
+    },
+    "schema_version": {
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "title_block": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TitleBlock"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "units": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Units"
+    },
+    "views": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Views",
+      "type": "array"
+    }
+  },
+  "title": "Geometry",
+  "type": "object"
+}

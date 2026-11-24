@@ -1,0 +1,202 @@
+{
+  "$defs": {
+    "DesignEdge": {
+      "properties": {
+        "relation": {
+          "title": "Relation",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "target",
+        "relation"
+      ],
+      "title": "DesignEdge",
+      "type": "object"
+    },
+    "DesignNode": {
+      "properties": {
+        "attributes": {
+          "additionalProperties": true,
+          "default": {},
+          "title": "Attributes",
+          "type": "object"
+        },
+        "feature_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "hole",
+                "slot",
+                "pocket",
+                "boss",
+                "fillet",
+                "rib",
+                "bend"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Feature Type"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "feature",
+            "parameter",
+            "tolerance",
+            "datum",
+            "material",
+            "requirement"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "sources": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SourceLocator"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "kind"
+      ],
+      "title": "DesignNode",
+      "type": "object"
+    },
+    "SourceLocator": {
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "file_id": {
+          "title": "File Id",
+          "type": "string"
+        },
+        "handle": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Handle"
+        },
+        "layer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layer"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "view": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "View"
+        }
+      },
+      "required": [
+        "file_id",
+        "version",
+        "confidence"
+      ],
+      "title": "SourceLocator",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "edges": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DesignEdge"
+      },
+      "title": "Edges",
+      "type": "array"
+    },
+    "nodes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DesignNode"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "title": "DesignGraph",
+  "type": "object"
+}

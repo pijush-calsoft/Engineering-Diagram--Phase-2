@@ -1,0 +1,39 @@
+[project]
+name = "edp"
+version = "0.0.0"
+description = "AI-Powered Engineering Diagram Platform (monorepo root)"
+requires-python = ">=3.11"
+dependencies = ["edp-contracts", "edp-eval", "edp-ci"]
+
+[dependency-groups]
+dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.10"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["contracts", "eval", "scripts/ci"]
+
+[tool.uv.sources]
+edp-contracts = { workspace = true }
+edp-eval = { workspace = true }
+edp-ci = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests"]
+addopts = "-q --import-mode=importlib"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["edp_contracts", "edp_eval", "edp_ci"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+plugins = ["pydantic.mypy"]

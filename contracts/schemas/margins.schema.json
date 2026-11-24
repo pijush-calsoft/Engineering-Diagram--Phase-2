@@ -1,0 +1,169 @@
+{
+  "$defs": {
+    "Margin": {
+      "properties": {
+        "allowable": {
+          "title": "Allowable",
+          "type": "number"
+        },
+        "computed": {
+          "exclusiveMinimum": 0,
+          "title": "Computed",
+          "type": "number"
+        },
+        "governing_location": {
+          "$ref": "#/$defs/SourceLocator"
+        },
+        "load_case_id": {
+          "title": "Load Case Id",
+          "type": "string"
+        },
+        "load_case_row": {
+          "$ref": "#/$defs/SourceLocator"
+        },
+        "margin": {
+          "readOnly": true,
+          "title": "Margin",
+          "type": "number"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "quantity": {
+          "enum": [
+            "stress",
+            "displacement",
+            "buckling",
+            "fatigue"
+          ],
+          "title": "Quantity",
+          "type": "string"
+        },
+        "solver_run_id": {
+          "title": "Solver Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "load_case_id",
+        "quantity",
+        "allowable",
+        "computed",
+        "governing_location",
+        "solver_run_id",
+        "load_case_row",
+        "model_version",
+        "margin"
+      ],
+      "title": "Margin",
+      "type": "object"
+    },
+    "SourceLocator": {
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "file_id": {
+          "title": "File Id",
+          "type": "string"
+        },
+        "handle": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Handle"
+        },
+        "layer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layer"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "view": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "View"
+        }
+      },
+      "required": [
+        "file_id",
+        "version",
+        "confidence"
+      ],
+      "title": "SourceLocator",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "margins": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Margin"
+      },
+      "title": "Margins",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "title": "Margins",
+  "type": "object"
+}

@@ -1,0 +1,32 @@
+{
+  "version": "example",
+  "schema_version": "0.1.0",
+  "items": [
+    {
+      "id": "example-001",
+      "input_format": "dxf",
+      "part_family": "example-family",
+      "provenance": {"kind": "internal"},
+      "data_uri": "s3://edp-fabric/example/example-001.dxf",
+      "ground_truth_uri": "s3://edp-fabric/example/labels/example-001.json",
+      "labelled": true,
+      "label_fields": ["geometry", "dimensions", "title_block"]
+    },
+    {
+      "id": "example-002",
+      "input_format": "scan",
+      "part_family": "example-family",
+      "provenance": {"kind": "open", "licence": "example-placeholder"},
+      "data_uri": "s3://edp-fabric/example/example-002.png",
+      "labelled": false
+    },
+    {
+      "id": "example-003",
+      "input_format": "step",
+      "part_family": "example-family",
+      "provenance": {"kind": "internal"},
+      "data_uri": "s3://edp-fabric/example/example-003.step",
+      "labelled": false
+    }
+  ]
+}
