@@ -21,9 +21,9 @@ step "Requirements files in sync with uv.lock (OD-18)"
 # requirements.txt / requirements-dev.txt are generated from uv.lock for pip users.
 # Regenerate with the two "uv export" commands in CLAUDE.md if this step fails.
 diff <(uv export --format requirements.txt --no-dev --no-hashes --frozen | grep -v '^#') \
-     <(grep -v '^#' requirements.txt) >/dev/null \
+     <(tr -d '\r' < requirements.txt | grep -v '^#') >/dev/null \
   && diff <(uv export --format requirements.txt --no-hashes --frozen | grep -v '^#') \
-          <(grep -v '^#' requirements-dev.txt) >/dev/null \
+          <(tr -d '\r' < requirements-dev.txt | grep -v '^#') >/dev/null \
   && echo "requirements.txt and requirements-dev.txt match uv.lock" \
   || { echo "FAILED: requirements files are out of date; regenerate them (see CLAUDE.md)"; exit 1; }
 

@@ -1,2 +1,5 @@
 # Shell scripts must keep LF endings so they run under bash on any platform.
 *.sh text eol=lf
+# Generated from uv.lock; keep LF so the CI sync check compares like with like.
+requirements*.txt text eol=lf
+uv.lock text eol=lf
