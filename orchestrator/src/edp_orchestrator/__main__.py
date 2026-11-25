@@ -9,6 +9,7 @@ import uuid
 from pathlib import Path
 
 from edp_catalogue import Catalogue
+from edp_contracts import Block
 from edp_contracts.registry import discover_blocks
 from edp_fabric import FabricStore
 from edp_kit import InMemoryEventBus
@@ -26,7 +27,7 @@ args.data_dir.mkdir(parents=True, exist_ok=True)
 bus = InMemoryEventBus()
 fabric = FabricStore(args.data_dir / "fabric", bus)
 catalogue = Catalogue(args.data_dir / "catalogue.sqlite", bus)
-blocks = stub_blocks()
+blocks: list[Block] = list(stub_blocks())
 if args.real_blocks:
     os.environ["EDP_DATA_DIR"] = str(args.data_dir)  # entry-point blocks use the same local Fabric
     real = discover_blocks()
