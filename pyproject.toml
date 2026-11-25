@@ -3,7 +3,17 @@ name = "edp"
 version = "0.0.0"
 description = "AI-Powered Engineering Diagram Platform (monorepo root)"
 requires-python = ">=3.11"
-dependencies = ["edp-contracts", "edp-eval", "edp-ci", "edp-kit", "edp-fabric", "edp-catalogue", "edp-orchestrator", "edp-b1-parser"]
+dependencies = [
+    "edp-contracts",
+    "edp-eval",
+    "edp-ci",
+    "edp-kit",
+    "edp-fabric",
+    "edp-catalogue",
+    "edp-orchestrator",
+    "edp-b1-parser",
+    "edp-b2-interpretation",
+]
 
 [dependency-groups]
 dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.10"]
@@ -12,7 +22,7 @@ dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.10"]
 package = false
 
 [tool.uv.workspace]
-members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "orchestrator", "blocks/b1_parser"]
+members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "orchestrator", "blocks/b1_parser", "blocks/b2_interpretation"]
 
 [tool.uv.sources]
 edp-contracts = { workspace = true }
@@ -23,9 +33,10 @@ edp-fabric = { workspace = true }
 edp-catalogue = { workspace = true }
 edp-orchestrator = { workspace = true }
 edp-b1-parser = { workspace = true }
+edp-b2-interpretation = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "orchestrator/tests", "blocks/b1_parser/tests"]
+testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "orchestrator/tests", "blocks/b1_parser/tests", "blocks/b2_interpretation/tests"]
 addopts = "-q"
 
 [tool.ruff]
@@ -36,7 +47,7 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_orchestrator", "edp_b1_parser"]
+known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_orchestrator", "edp_b1_parser", "edp_b2_interpretation"]
 
 [tool.mypy]
 python_version = "3.11"
