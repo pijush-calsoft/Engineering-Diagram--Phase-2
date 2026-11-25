@@ -3,16 +3,7 @@ name = "edp"
 version = "0.0.0"
 description = "AI-Powered Engineering Diagram Platform (monorepo root)"
 requires-python = ">=3.11"
-dependencies = [
-    "edp-contracts",
-    "edp-eval",
-    "edp-ci",
-    "edp-kit",
-    "edp-fabric",
-    "edp-catalogue",
-    "edp-orchestrator",
-    "edp-b1-parser",
-]
+dependencies = ["edp-contracts", "edp-eval", "edp-ci", "edp-kit", "edp-fabric", "edp-catalogue", "edp-orchestrator", "edp-b1-parser"]
 
 [dependency-groups]
 dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.10"]

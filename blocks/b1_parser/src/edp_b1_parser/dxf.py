@@ -126,7 +126,27 @@ class _Reader:
             "measurement": measured,
             "displayed": displayed,
             "value": value if value is not None else measured,
+            **_measured_points(e),
         }
+
+
+def _measured_points(e: Any) -> dict[str, Any]:
+    """The points a DIMENSION measures, for association to features (Phase 2 task 2).
+
+    DXF reference: linear and aligned use defpoint2 and defpoint3 (angle 0 = x axis,
+    90 = y axis); diameter has defpoint and defpoint4 at opposite ends of the
+    diameter; radius has defpoint at the centre and defpoint4 on the arc.
+    """
+    xy = lambda p: [float(p[0]), float(p[1])]  # noqa: E731
+    kind = e.dimtype
+    if kind in (0, 1):
+        return {"p1": xy(e.dxf.defpoint2), "p2": xy(e.dxf.defpoint3), "angle": float(e.dxf.get("angle", 0.0))}
+    if kind == 3:
+        a, b = e.dxf.defpoint, e.dxf.defpoint4
+        return {"center": [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]}
+    if kind == 4:
+        return {"center": xy(e.dxf.defpoint)}
+    return {}
 
 
 def _decimals(number: str) -> int:

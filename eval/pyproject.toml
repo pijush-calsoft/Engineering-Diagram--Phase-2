@@ -5,6 +5,7 @@ description = "Evaluation harness: golden dataset manifests and metrics (plan se
 requires-python = ">=3.11"
 dependencies = [
     "edp-b1-parser",
+    "edp-b2-interpretation",
     "edp-contracts",
     "ezdxf>=1.3",
     "pydantic>=2.7,<3",
@@ -13,6 +14,7 @@ dependencies = [
 [tool.uv.sources]
 edp-contracts = { workspace = true }
 edp-b1-parser = { workspace = true }
+edp-b2-interpretation = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

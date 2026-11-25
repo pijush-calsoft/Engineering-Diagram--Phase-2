@@ -24,8 +24,8 @@ InputClass = Literal["vector", "scan"]
 @dataclass(frozen=True)
 class Target:
     op: Literal[">=", "<="]
-    vector: float                      # plan column "Vector DXF / PDF"
-    scan: float                        # plan column "Scans"
+    vector: float  # plan column "Vector DXF / PDF"
+    scan: float  # plan column "Scans"
 
     def met(self, value: float, input_class: InputClass) -> bool:
         threshold = self.vector if input_class == "vector" else self.scan
@@ -35,15 +35,15 @@ class Target:
 # Source: plan Phase 2 "Exit criteria (on golden set)" table.
 # Proposals to confirm in Phase 0 (plan section 7).
 PHASE2_TARGETS: dict[str, Target] = {
-    "dimension_f1": Target(">=", vector=0.95, scan=0.85),           # Dimension value and target F1
-    "title_block_accuracy": Target(">=", vector=0.98, scan=0.92),   # Title block field accuracy
-    "locator_coverage": Target(">=", vector=1.0, scan=1.0),         # Entities with a valid source locator
-    "ece": Target("<=", vector=0.05, scan=0.08),                    # Calibration error (ECE) on confidences
+    "dimension_f1": Target(">=", vector=0.95, scan=0.85),  # Dimension value and target F1
+    "title_block_accuracy": Target(">=", vector=0.98, scan=0.92),  # Title block field accuracy
+    "locator_coverage": Target(">=", vector=1.0, scan=1.0),  # Entities with a valid source locator
+    "ece": Target("<=", vector=0.05, scan=0.08),  # Calibration error (ECE) on confidences
 }
 
 
 class Dimension(BaseModel):
-    target: str                        # id of the feature the dimension measures (Phase 2 task 2)
+    target: str  # id of the feature the dimension measures (Phase 2 task 2)
     value: float
 
 

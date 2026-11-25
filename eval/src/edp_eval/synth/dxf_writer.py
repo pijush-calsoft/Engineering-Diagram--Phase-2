@@ -14,7 +14,7 @@ import ezdxf
 from ezdxf.document import Drawing
 from ezdxf.layouts import Modelspace
 
-from edp_eval.synth.labels import DimensionKind, LabelDimension, LabelText, SyntheticLabel
+from edp_eval.synth.labels import DimensionKind, LabelDimension, LabelFeature, LabelText, SyntheticLabel
 from edp_eval.synth.parts import Bracket, Family, Hole, Part, Plate, sample
 from edp_eval.synth.profiles import PROFILES, DrawingProfile
 
@@ -32,6 +32,7 @@ class _Sheet:
             self.doc.layers.add(name)
         self.msp: Modelspace = self.doc.modelspace()
         self.dims: list[LabelDimension] = []
+        self.features: list[LabelFeature] = []
         # dimlfac = 1: the "EZDXF" and "EZ_RADIUS" styles ship with dimlfac = 100, which would
         # display 100 times the measured value.
         self.override = {
@@ -131,6 +132,9 @@ def _hole_dims(s: _Sheet, holes: tuple[Hole, ...], ox: float, oy: float, view: s
         c = (ox + x, oy + y)
         s.msp.add_circle(c, d / 2, dxfattribs={"layer": "GEOMETRY"})
         s.diameter(f"hole{i}.diameter", view, c, d)
+        s.features.append(
+            LabelFeature(id=f"hole{i}", type="hole", parameters={"diameter": d, "x": x, "y": y})
+        )
         if x not in seen_x:
             s.linear(f"hole{i}.x", view, (ox, oy), c, (ox, oy - (1 + len(seen_x)) * s.gap), 0, x)
             seen_x.add(x)
@@ -160,6 +164,7 @@ def _draw_plate(s: _Sheet, part: Plate) -> dict[str, float]:
         s.linear("slot.length", "top", (cx - sl / 2, cy), (cx + sl / 2, cy), (cx, py + W + s.gap), 0, sl)
         s.linear("slot.width", "top", (cx, cy - r), (cx, cy + r), (x1 + r + s.gap, cy), 90, sw)
         params |= {"slot_length": sl, "slot_width": sw}
+        s.features.append(LabelFeature(id="slot", type="slot", parameters={"length": sl, "width": sw}))
     if part.holes:
         params["hole_diameter"] = s.u(part.holes[0].diameter)
     return params
@@ -182,6 +187,7 @@ def _draw_bracket(s: _Sheet, part: Bracket) -> dict[str, float]:
     s.linear("bracket.flange_b", "front", (0, 0), (B, 0), (0, -s.gap), 0, B)
     s.linear("bracket.thickness", "front", (0, H), (t, H), (0, H + s.gap), 0, t)
     s.radius("bracket.bend_radius", "front", c, r, 225)
+    s.features.append(LabelFeature(id="bend", type="bend", parameters={"radius": r, "thickness": t}))
     py = _plan_view_y(s.p, H, W, s.gap)
     s.rect(0, py, B, W)  # view from above
     s.linear("bracket.width", "top", (B, py), (B, py + W), (B + s.gap, py), 90, W)
@@ -236,6 +242,7 @@ def generate(
         parameters=params,
         dimensions=s.dims,
         title_block=title,
+        features=s.features,
     )
     return s.doc, label
 

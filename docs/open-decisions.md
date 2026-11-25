@@ -79,6 +79,7 @@ These are listed with the owner role the deck gives. They overlap with the items
 | OD-42 | Knowledge Graph embeddings (plan Phase 3: bge-m3 / nomic-embed, local): through the OpenAI API or local? | Open | Not covered by the OD-38 answer. "No local LLM" (OD-5) does not clearly cover embedding models |
 | OD-43 | Which OpenAI models for text, vision, code generation and LLM-as-judge? | Open | `.env` slots `EDP_LLM_MODEL_TEXT`, `_VISION`, `_CODE`, `_JUDGE` are blank. The nightly gateway benchmark (plan Phase 1, §7 Gateway row) can inform the choice |
 | OD-44 | Virus scanner for uploads (plan Phase 1: "virus and type check") | Open | Type check from content is built in `edp_fabric`; no scanner chosen. Plan and deck name none |
+| OD-45 | Geometric coincidence tolerance for dimension association and feature rules | Open | `REL_TOL = 1e-6` (relative) in `edp_b2_interpretation.recognise`: exact for CAD-written files. Real drawings may need a looser, possibly per-client value (plan Phase 2 risks: "per-client drafting profiles stored as configuration") |
 
 ## Detail items tracked in their own documents
 

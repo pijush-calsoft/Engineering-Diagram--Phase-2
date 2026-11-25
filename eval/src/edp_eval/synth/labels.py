@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-LABEL_SCHEMA_VERSION = "0.1.0"
+LABEL_SCHEMA_VERSION = "0.2.0"
 
 DimensionKind = Literal["linear", "diameter", "radius"]
 
@@ -20,6 +20,14 @@ class LabelDimension(BaseModel):
     kind: DimensionKind
     view: str
     handle: str  # DXF handle of the DIMENSION entity (source locator)
+
+
+class LabelFeature(BaseModel):
+    """A feature as drawn (design graph feature types, plan Phase 3 task 1). Added in label schema 0.2.0."""
+
+    id: str  # matches the dimension target prefix, e.g. "hole1"
+    type: Literal["hole", "slot", "bend"]
+    parameters: dict[str, float]  # hole: diameter, x, y; slot: length, width; bend: radius, thickness
 
 
 class LabelText(BaseModel):
@@ -39,3 +47,4 @@ class SyntheticLabel(BaseModel):
     parameters: dict[str, float]
     dimensions: list[LabelDimension]
     title_block: dict[str, LabelText]
+    features: list[LabelFeature] = []

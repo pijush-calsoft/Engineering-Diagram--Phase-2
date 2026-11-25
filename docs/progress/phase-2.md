@@ -25,7 +25,7 @@ Phase 2 key tasks (plan):
 | # | Task | Status |
 |---|---|---|
 | 1 | Unified `geometry` artifact | **Done for DXF** |
-| 2 | Dimension association to features | Not started. The F1 target is the DIMENSION handle until then |
+| 2 | Dimension association to features | **Done in Phase 3 work** (block 2, `recognise.py`); scored by `edp_eval.suites.interpretation` |
 | 3 | Title block extraction with per-field confidence | **Done for "LABEL: value" text and block attributes** |
 | 4 | Fine-tune symbol detector | **Dropped** (OD-5, OD-38, ADR-0007) |
 | 5 | Confidence calibration | Measured (ECE). Starting values 1.0 / 0.5 not yet calibrated on varied data |

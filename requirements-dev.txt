@@ -4,10 +4,15 @@
     # via
     #   edp
     #   edp-eval
+-e ./blocks/b2_interpretation
+    # via
+    #   edp
+    #   edp-eval
 -e ./contracts
     # via
     #   edp
     #   edp-b1-parser
+    #   edp-b2-interpretation
     #   edp-catalogue
     #   edp-eval
     #   edp-fabric
@@ -25,11 +30,13 @@
     # via
     #   edp
     #   edp-b1-parser
+    #   edp-b2-interpretation
     #   edp-orchestrator
 -e ./platform/kit
     # via
     #   edp
     #   edp-b1-parser
+    #   edp-b2-interpretation
     #   edp-catalogue
     #   edp-fabric
     #   edp-orchestrator
@@ -68,6 +75,10 @@ ezdxf==1.4.5
     #   edp-eval
 fastapi==0.165.0
     # via edp-kit
+flexcache==0.3
+    # via pint
+flexparser==0.4
+    # via pint
 fonttools==4.68.0
     # via ezdxf
 h11==0.16.0
@@ -149,11 +160,18 @@ packaging==26.4
     #   pytest
 pathspec==1.1.1
     # via mypy
+pint==0.25.3 ; python_full_version < '3.12'
+    # via edp-b2-interpretation
+pint==0.26.2 ; python_full_version >= '3.12'
+    # via edp-b2-interpretation
+platformdirs==4.14.8
+    # via pint
 pluggy==1.7.0
     # via pytest
 pydantic==2.14.4
     # via
     #   edp-b1-parser
+    #   edp-b2-interpretation
     #   edp-contracts
     #   edp-eval
     #   fastapi
@@ -197,12 +215,15 @@ typing-extensions==4.16.0
     #   anyio
     #   ezdxf
     #   fastapi
+    #   flexcache
+    #   flexparser
     #   httpx2
     #   langchain-core
     #   langchain-protocol
     #   langsmith
     #   mypy
     #   opentelemetry-api
+    #   pint
     #   pydantic
     #   pydantic-core
     #   starlette

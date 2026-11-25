@@ -26,6 +26,7 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 - **Client data stays out of the repo** (plan principle 7). No drawings, models or results in git, and no client names in code or docs.
 - **No personal names** in docs. Use roles.
 - Git commit messages carry no AI attribution (user's global instruction).
+- **Before every commit:** run `bash scripts/ci/run_ci.sh` *after the last edit*, and read `git diff --cached -- '*pyproject.toml' uv.lock requirements*.txt`. Every new dependency must be one you added on purpose. (On 2026-11-25 an unrelated package, `robocrew`, entered the root dependencies outside the planned work, was swept into a commit by `git add -A`, and was removed in `96e293d`.)
 - **Test file names must be unique across the repo** (pytest default import mode). Importlib mode is not used: it names test modules after their path, and the top-level `platform/` folder then hides Python's standard `platform` module.
 
 ## Updating the docs (required at the end of every phase or work session)
@@ -40,7 +41,7 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 ```
 contracts/      edp-contracts: plug-in contract v0.1, artifact schemas, JSON Schema exports (contracts/schemas/)
 platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (not started)
-blocks/         b1_parser (DXF path built, Phase 2) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
+blocks/         b1_parser (DXF path, Phase 2), b2_interpretation (rule-based, Phase 3) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
 orchestrator/   LangGraph graph, stub blocks 1-8, SQLite checkpointer (Phase 1 skeleton, ADR-0001)
 console/        React app                                (Phase 1, not started)
 mcp/            MCP server wrappers per block            (not started)
@@ -58,7 +59,7 @@ Local setup (OD-2, runs locally): `cp .env.example .env`, then fill in `OPENAI_A
 uv sync                                   # install the workspace (Python >= 3.11; uv)
 uv run pytest                             # all tests
 uv run ruff check .                       # lint
-uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src orchestrator/src blocks/b1_parser/src
+uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src orchestrator/src blocks/b1_parser/src blocks/b2_interpretation/src
 uv run python -m edp_ci.license_gate      # licence policy gate
 uv run python -m edp_contracts.export     # regenerate contracts/schemas/*.json
 bash scripts/ci/run_ci.sh                 # everything CI runs
@@ -66,6 +67,7 @@ uv export --format requirements.txt --no-dev --no-hashes --frozen -o requirement
 uv export --format requirements.txt --no-hashes --frozen -o requirements-dev.txt
 uv run python -m edp_orchestrator --file eval/golden/data/synthetic/syn-iso-plate-000.dxf --data-dir var [--real-blocks]   # walking skeleton
 uv run python -m edp_eval.suites.parser_dxf --golden eval/golden/data/synthetic --value-tol 1e-6 --n-bins 10
+uv run python -m edp_eval.suites.interpretation --golden eval/golden/data/synthetic --value-tol 1e-6
 uv run python -m edp_eval.synth --out eval/golden/data/synthetic --count 80 --seed 2026 --uri-prefix s3://edp-fabric/golden/synthetic
 ```
 

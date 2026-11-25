@@ -45,11 +45,11 @@ LabelField = Literal["geometry", "dimensions", "tolerances", "title_block", "mat
 # are reported separately and never count (Phase 0 task 2, principle 7).
 SHARED_PROVENANCE_KINDS: frozenset[str] = frozenset({"internal", "open"})
 
-PHASE0_MIN_LABELLED_DRAWINGS = 60      # Phase 0 exit criterion
-GOLDEN_DRAWINGS_RANGE = (60, 100)      # Phase 0 task 2, "60 to 100 drawings"
-GOLDEN_MODELS_TARGET = 20              # Phase 0 task 2, "plus 20 STEP/STL models"
+PHASE0_MIN_LABELLED_DRAWINGS = 60  # Phase 0 exit criterion
+GOLDEN_DRAWINGS_RANGE = (60, 100)  # Phase 0 task 2, "60 to 100 drawings"
+GOLDEN_MODELS_TARGET = 20  # Phase 0 task 2, "plus 20 STEP/STL models"
 
-FABRIC_URI_PREFIX = "s3://"            # plan section 3, Artifact.uri: "s3:// path inside the Data Fabric"
+FABRIC_URI_PREFIX = "s3://"  # plan section 3, Artifact.uri: "s3:// path inside the Data Fabric"
 
 # Leading and trailing whitespace is stripped; blank values are rejected.
 NonBlankStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -64,8 +64,8 @@ class Provenance(BaseModel):
     """
 
     kind: Literal["internal", "open", "client"]
-    licence: str | None = None         # required for openly licensed items
-    client_scope: str | None = None    # required for client items, rejected for others; opaque tag only
+    licence: str | None = None  # required for openly licensed items
+    client_scope: str | None = None  # required for client items, rejected for others; opaque tag only
 
     @model_validator(mode="after")
     def _check_kind(self) -> "Provenance":
@@ -79,7 +79,7 @@ class Provenance(BaseModel):
 
 
 def _check_fabric_uri(value: str) -> str:
-    rest = value[len(FABRIC_URI_PREFIX):]
+    rest = value[len(FABRIC_URI_PREFIX) :]
     if not value.startswith(FABRIC_URI_PREFIX) or not rest.strip() or value != value.strip():
         raise ValueError(f"expected a Data Fabric uri starting with {FABRIC_URI_PREFIX!r}, got {value!r}")
     return value
@@ -88,9 +88,9 @@ def _check_fabric_uri(value: str) -> str:
 class GoldenItem(BaseModel):
     id: NonBlankStr
     input_format: InputFormat
-    part_family: NonBlankStr           # free string until OD-1 / OD-12 are decided
+    part_family: NonBlankStr  # free string until OD-1 / OD-12 are decided
     provenance: Provenance
-    data_uri: str                      # Data Fabric location of the drawing or model
+    data_uri: str  # Data Fabric location of the drawing or model
     ground_truth_uri: str | None = None  # Data Fabric location of the labels; optional until labelled
     labelled: bool = False
     label_fields: list[LabelField] = []  # labelled categories; only allowed when labelled is true
@@ -150,21 +150,21 @@ class Phase0GoldenCheck(BaseModel):
     counts per label field so a stricter rule can be applied once decided.
     """
 
-    labelled_drawings: int             # shared (internal or open) only
-    total_drawings: int                # shared only
+    labelled_drawings: int  # shared (internal or open) only
+    total_drawings: int  # shared only
     min_labelled_drawings: int = PHASE0_MIN_LABELLED_DRAWINGS
     drawings_range: tuple[int, int] = GOLDEN_DRAWINGS_RANGE
-    total_drawings_within_range: bool     # all shared drawings in range; information only
+    total_drawings_within_range: bool  # all shared drawings in range; information only
     labelled_drawings_within_range: bool  # shared labelled drawings in range; information only
-    labelled_models: int               # shared only; step + stl only
-    total_models: int                  # shared only; step + stl only
+    labelled_models: int  # shared only; step + stl only
+    total_models: int  # shared only; step + stl only
     models_target: int = GOLDEN_MODELS_TARGET
     models_target_met: bool
-    labelled_by_format: dict[str, int]          # shared only
+    labelled_by_format: dict[str, int]  # shared only
     labelled_drawings_by_field: dict[str, int]  # shared labelled drawings per label field
-    client_labelled_drawings: int      # client-scoped; never counts toward passed
-    client_labelled_models: int        # client-scoped; step + stl only
-    passed: bool                       # labelled_drawings >= min_labelled_drawings
+    client_labelled_drawings: int  # client-scoped; never counts toward passed
+    client_labelled_models: int  # client-scoped; step + stl only
+    passed: bool  # labelled_drawings >= min_labelled_drawings
 
 
 class GoldenManifest(BaseModel):
