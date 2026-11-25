@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type Box, formatValue, zoneOf } from "../geometry";
-import type { DesignGraph, DesignNode, Flag, Geometry, RunView } from "../types";
+import type { DesignGraph, DesignNode, Flag, Geometry, RunView, SimilarParts } from "../types";
 
 const ASSOCIATION_TEXT: Record<string, string> = {
   by_value: "matched to a dimension by value",
@@ -14,6 +14,8 @@ export type Selection = { key: string; handles: Set<string> } | null;
 type Props = {
   geometry: Geometry | null;
   graph: DesignGraph | null;
+  similar: SimilarParts | null;
+  settled: { ids: Set<string>; handles: Set<string> };
   flags: Flag[];
   box: Box | null;
   view: RunView | null;
@@ -26,7 +28,17 @@ function handlesOf(node: DesignNode): Set<string> {
   return new Set(node.sources.map((s) => s.handle).filter((h): h is string => !!h));
 }
 
-export function Inspector({ geometry, graph, flags, box, view, selection, onSelect, onReview }: Props) {
+const CORROBORATION_TEXT: Record<string, string> = {
+  resolved: "Confirmed by similar parts",
+  conflict: "Similar parts disagree: check it",
+  no_evidence: "No similar part shows this value: check it",
+};
+
+function revisionLabel(r: { part_number: string; revision: string | null }): string {
+  return r.revision ? `${r.part_number} rev ${r.revision}` : r.part_number;
+}
+
+export function Inspector({ geometry, graph, similar, settled, flags, box, view, selection, onSelect, onReview }: Props) {
   const [reviewer, setReviewer] = useState("");
   const nodes = new Map(graph?.nodes.map((n) => [n.id, n]) ?? []);
   const features = graph?.nodes.filter((n) => n.kind === "feature") ?? [];
@@ -54,7 +66,52 @@ export function Inspector({ geometry, graph, flags, box, view, selection, onSele
         </section>
       )}
 
-      {geometry && (
+      {geometry?.solids && geometry.solids.length > 0 && (
+        <section>
+          <h2>Read from the 3D model</h2>
+          {geometry.solids.map((s, i) => {
+            const [x0, y0, z0, x1, y1, z1] = s.bbox;
+            const unit = geometry.units ?? "units not stated";
+            return (
+              <dl className="facts" key={i}>
+                <dt>Size</dt>
+                <dd>
+                  {formatValue(x1 - x0)} × {formatValue(y1 - y0)} × {formatValue(z1 - z0)} {unit}
+                </dd>
+                {s.volume !== null && (
+                  <>
+                    <dt>Volume</dt>
+                    <dd>
+                      {formatValue(Number(s.volume.toFixed(2)))} {geometry.units ? `${geometry.units}³` : ""}
+                    </dd>
+                  </>
+                )}
+                <dt>Faces</dt>
+                <dd>{Object.entries(s.faces).map(([k, n]) => `${n} ${k}`).join(", ")}</dd>
+                {s.lossy ? (
+                  <>
+                    <dt>Mesh</dt>
+                    <dd>{s.watertight ? "closed" : "not closed"}</dd>
+                    <dt>Openings</dt>
+                    <dd>{s.through_holes_hint ?? "unknown"} (estimated from the mesh)</dd>
+                  </>
+                ) : (
+                  <>
+                    <dt>Holes</dt>
+                    <dd>
+                      {s.holes.length === 0
+                        ? "none"
+                        : s.holes.map((h) => `Ø${formatValue(Number(h.diameter.toFixed(4)))}`).join(", ")}
+                    </dd>
+                  </>
+                )}
+              </dl>
+            );
+          })}
+        </section>
+      )}
+
+      {geometry && geometry.entities.length > 0 && (
         <section>
           <h2>Read from the drawing</h2>
           <dl className="facts">
@@ -93,10 +150,12 @@ export function Inspector({ geometry, graph, flags, box, view, selection, onSele
                   <ul className="params">
                     {params.map((p) => {
                       const a = p.attributes;
+                      const confirmed = settled.ids.has(p.id);
+                      const source = confirmed ? "from geometry, confirmed by similar parts" : ASSOCIATION_TEXT[a.association];
                       return (
                         <li key={p.id}>
                           <button
-                            className={`param assoc-${a.association} ${selection?.key === p.id ? "is-selected" : ""}`}
+                            className={`param assoc-${confirmed ? "confirmed" : a.association} ${selection?.key === p.id ? "is-selected" : ""}`}
                             aria-pressed={selection?.key === p.id}
                             onClick={() => toggle(p.id, handlesOf(p))}
                           >
@@ -104,9 +163,7 @@ export function Inspector({ geometry, graph, flags, box, view, selection, onSele
                             <span className="param-value">
                               {formatValue(a.value)} {a.unit ?? ""}
                             </span>
-                            {ASSOCIATION_TEXT[a.association] && (
-                              <span className="param-source">{ASSOCIATION_TEXT[a.association]}</span>
-                            )}
+                            {source && <span className="param-source">{source}</span>}
                           </button>
                         </li>
                       );
@@ -140,6 +197,52 @@ export function Inspector({ geometry, graph, flags, box, view, selection, onSele
         </section>
       )}
 
+      {similar && (
+        <section>
+          <h2>Similar parts</h2>
+          {similar.similar.length === 0 ? (
+            <p className="quiet">This is the first part of its kind in the knowledge graph.</p>
+          ) : (
+            <ol className="similar">
+              {similar.similar.map((s) => (
+                <li key={s.revision_id}>
+                  <span>{revisionLabel(s)}</span>
+                  <span className="score">{Math.round(s.score * 100)}% alike</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {similar.corroborations.map((c) => {
+            const node = nodes.get(c.parameter);
+            return (
+              <div key={c.parameter} className={`corroboration status-${c.status}`}>
+                <button
+                  className={`param ${selection?.key === c.parameter ? "is-selected" : ""}`}
+                  aria-pressed={selection?.key === c.parameter}
+                  onClick={() => node && toggle(c.parameter, handlesOf(node))}
+                >
+                  <span className="param-name">{c.parameter}</span>
+                  <span className="param-value">
+                    {formatValue(c.value)} {node?.attributes.unit ?? ""}
+                  </span>
+                  <span className="param-source">
+                    {CORROBORATION_TEXT[c.status]}, confidence {c.confidence.toFixed(2)}
+                  </span>
+                </button>
+                <ul className="evidence">
+                  {c.evidence.map((e, i) => (
+                    <li key={i} className={e.agrees ? "agrees" : "disagrees"}>
+                      {revisionLabel(e)}: {formatValue(e.value)} {e.agrees ? "agrees" : "differs"}
+                      {e.same_part ? "" : " (other part, supporting only)"}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       {view && (
         <section>
           <h2>Flags</h2>
@@ -150,15 +253,19 @@ export function Inspector({ geometry, graph, flags, box, view, selection, onSele
               {flags.map((f, i) => {
                 const handle = f.target?.handle;
                 const key = `flag-${i}`;
+                const isSettled = f.code === "LOW_CONFIDENCE" && !!handle && settled.handles.has(handle);
                 return (
                   <li key={key}>
                     <button
-                      className={`flag severity-${f.severity} ${selection?.key === key ? "is-selected" : ""}`}
+                      className={`flag severity-${isSettled ? "info" : f.severity} ${selection?.key === key ? "is-selected" : ""}`}
                       disabled={!handle}
                       onClick={() => handle && toggle(key, new Set([handle]))}
                     >
                       <span className="flag-code">{f.code.replaceAll("_", " ").toLowerCase()}</span>
-                      <span className="flag-message">{f.message}</span>
+                      <span className="flag-message">
+                        {f.message}
+                        {isSettled && " Settled: confirmed by the knowledge graph."}
+                      </span>
                     </button>
                   </li>
                 );

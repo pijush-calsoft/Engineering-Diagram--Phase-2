@@ -24,8 +24,9 @@ _NUMBER = re.compile(r"\d*\.?\d+")
 
 
 class _Sheet:
-    def __init__(self, profile: DrawingProfile) -> None:
+    def __init__(self, profile: DrawingProfile, omit: frozenset[str] = frozenset()) -> None:
         self.p = profile
+        self.omit = omit  # dimension targets left off the drawing on purpose (KG corroboration cases)
         self.doc: Drawing = ezdxf.new("R2010", setup=True, units=profile.insunits)
         self.doc.header["$MEASUREMENT"] = profile.measurement
         for name in LAYERS:
@@ -75,6 +76,8 @@ class _Sheet:
         angle: float,
         value: float,
     ) -> None:
+        if target in self.omit:
+            return
         dim = self.msp.add_linear_dim(
             base=base,
             p1=p1,
@@ -88,6 +91,8 @@ class _Sheet:
         self._record(dim, "linear", target, view, value)
 
     def diameter(self, target: str, view: str, center: tuple[float, float], d: float) -> None:
+        if target in self.omit:
+            return
         dim = self.msp.add_diameter_dim(
             center=center,
             radius=d / 2,
@@ -100,6 +105,8 @@ class _Sheet:
         self._record(dim, "diameter", target, view, d)
 
     def radius(self, target: str, view: str, center: tuple[float, float], r: float, angle: float) -> None:
+        if target in self.omit:
+            return
         dim = self.msp.add_radius_dim(
             center=center,
             radius=r,
@@ -204,11 +211,18 @@ def _draw_bracket(s: _Sheet, part: Bracket) -> dict[str, float]:
     }
 
 
-def _title_block(s: _Sheet, index: int, rng: random.Random, x: float, y: float) -> dict[str, LabelText]:
+def _title_block(
+    s: _Sheet, index: int, rng: random.Random, x: float, y: float, given: dict[str, str] | None = None
+) -> dict[str, LabelText]:
+    revision, material = (
+        rng.choice(("A", "B", "C")),
+        rng.choice(s.p.materials),
+    )  # always drawn: keeps sequences
+    given = given or {}
     values = {
-        "part_number": f"EDP-SYN-{index:04d}",
-        "revision": rng.choice(("A", "B", "C")),
-        "material": rng.choice(s.p.materials),
+        "part_number": given.get("part_number", f"EDP-SYN-{index:04d}"),
+        "revision": given.get("revision", revision),
+        "material": given.get("material", material),
         "scale": "1:1",
         "units": s.p.units.upper(),
         "tolerances": s.p.general_tolerance,
@@ -222,15 +236,29 @@ def _title_block(s: _Sheet, index: int, rng: random.Random, x: float, y: float) 
 
 
 def generate(
-    profile: DrawingProfile, family: Family, index: int, seed: int
+    profile: DrawingProfile,
+    family: Family,
+    index: int,
+    seed: int,
+    *,
+    part: Part | None = None,
+    omit: frozenset[str] = frozenset(),
+    title: dict[str, str] | None = None,
+    group: str | None = None,
 ) -> tuple[Drawing, SyntheticLabel]:
+    """Draw one part. Without ``part``/``title``, the part and title block are sampled from the seed.
+
+    ``omit`` leaves the named dimensions off the drawing (the label keeps the true feature
+    values); ``group`` names the similar-part group for the Knowledge Graph evaluation.
+    """
     rng = random.Random(f"{seed}-{index}")
-    part: Part = sample(family, rng)
-    s = _Sheet(profile)
+    if part is None:
+        part = sample(family, rng)
+    s = _Sheet(profile, omit)
     params = _draw_plate(s, part) if isinstance(part, Plate) else _draw_bracket(s, part)
     extent = max(params.get("length", 0.0), params.get("flange_b", 0.0))
     s.text(f"{profile.projection.replace('_', ' ').upper()} PROJECTION", (extent + 8 * s.gap, 0), "NOTES")
-    title = _title_block(s, index, rng, extent + 8 * s.gap, -4 * s.gap)
+    title_fields = _title_block(s, index, rng, extent + 8 * s.gap, -4 * s.gap, title)
     label = SyntheticLabel(
         id=f"syn-{profile.name}-{family}-{index:03d}",
         family=family,
@@ -241,8 +269,10 @@ def generate(
         views=["front", "top"],
         parameters=params,
         dimensions=s.dims,
-        title_block=title,
+        title_block=title_fields,
         features=s.features,
+        group=group,
+        omitted=sorted(omit),
     )
     return s.doc, label
 

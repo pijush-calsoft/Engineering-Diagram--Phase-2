@@ -52,7 +52,7 @@ def test_upload_review_and_errors(client, tmp_path):
     bad = c.post("/api/runs", files={"file": ("x.dxf", b"not a drawing")})
     assert bad.status_code == 415
     path = next((tmp_path / "golden").glob("*.dxf"))
-    console.blocks[2].status = "needs_review"  # stub b3 asks for review
+    console.blocks[3].status = "needs_review"  # stub b4 asks for review (b1 to b3 are real blocks)
     started = c.post("/api/runs", files={"file": (path.name, path.read_bytes())}).json()
     assert wait(c, started["run_id"])["status"]["state"] == "awaiting_review"
     assert (

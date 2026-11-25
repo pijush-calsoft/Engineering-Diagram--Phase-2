@@ -4,7 +4,7 @@ One process serves the console and fronts the Data Fabric, Data Catalogue and
 orchestrator, using the local adapters (ADR-0008). Blocks registered through the
 ``edp.blocks`` entry point replace the stubs; the rest stay stubs.
 
-Usage: ``uv run python -m edp_orchestrator.server --data-dir var [--port 8765] [--golden DIR]``
+Usage: ``uv run python -m edp_orchestrator.server --data-dir var [--port 8765] [--golden DIR ...]``
 """
 
 import argparse
@@ -32,6 +32,7 @@ from edp_orchestrator.stubs import stub_blocks
 
 CONSOLE_DIST = Path(__file__).resolve().parents[3] / "console" / "dist"
 POLL_SECONDS = 0.2
+SAMPLE_SUFFIXES = {".dxf", ".dwg", ".pdf", ".step", ".stp", ".igs", ".iges", ".stl"}
 
 
 class StartedRun(BaseModel):
@@ -58,7 +59,7 @@ class RunView(BaseModel):
 
 
 class Console:
-    def __init__(self, data_dir: Path, golden: Path | None = None) -> None:
+    def __init__(self, data_dir: Path, golden: Path | list[Path] | None = None) -> None:
         data_dir.mkdir(parents=True, exist_ok=True)
         os.environ["EDP_DATA_DIR"] = str(data_dir)  # entry-point blocks share this Fabric
         self.bus = InMemoryEventBus()
@@ -70,7 +71,7 @@ class Console:
         self.orchestrator = Orchestrator(
             self.blocks, self.catalogue, self.bus, data_dir / "checkpoints.sqlite"
         )
-        self.golden = golden
+        self.golden = [golden] if isinstance(golden, Path) else list(golden or [])
         self.lock = threading.Lock()
         self.running: set[str] = set()
         self.uploads: dict[str, IngestResult] = {}
@@ -141,16 +142,23 @@ def create_app(console: Console) -> FastAPI:
             BlockInfo(name=b.name, version=b.version, real=b.name in console.real) for b in console.blocks
         ]
 
+    def sample_files() -> dict[str, Path]:
+        files: dict[str, Path] = {}
+        for folder in console.golden:
+            if folder.is_dir():
+                for p in sorted(folder.iterdir()):
+                    if p.suffix.lower() in SAMPLE_SUFFIXES:
+                        files.setdefault(p.name, p)
+        return files
+
     @app.get("/api/samples", response_model=list[str])
     def samples() -> list[str]:
-        if not console.golden or not console.golden.is_dir():
-            return []
-        return sorted(p.name for p in console.golden.glob("*.dxf"))
+        return sorted(sample_files())
 
     @app.post("/api/runs/sample", response_model=StartedRun)
     def run_sample(name: str) -> StartedRun:
-        path = (console.golden / name) if console.golden else None
-        if path is None or path.name != name or not path.is_file():
+        path = sample_files().get(name)
+        if path is None:
             raise HTTPException(status_code=404, detail=f"no sample drawing named {name!r}")
         return console.start(path.name, path.read_bytes())
 
@@ -199,7 +207,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(prog="python -m edp_orchestrator.server", description=__doc__)
     ap.add_argument("--data-dir", type=Path, required=True)
     ap.add_argument(
-        "--golden", type=Path, default=None, help="folder of sample drawings to offer in the console"
+        "--golden",
+        type=Path,
+        nargs="*",
+        default=[],
+        help="folders of sample drawings and models to offer in the console",
     )
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)

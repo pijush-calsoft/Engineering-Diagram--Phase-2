@@ -19,7 +19,9 @@ from typing import Any
 
 from ezdxf import bbox, recover
 from ezdxf.entities import DXFGraphic
+from ezdxf.lldxf import const
 
+from edp_b1_parser.dxf_raw import raw_dimensions
 from edp_b1_parser.title_block import TextItem, extract
 from edp_contracts import Flag, SourceLocator
 from edp_contracts.artifacts.geometry import Geometry, GeometryEntity
@@ -131,6 +133,18 @@ class _Reader:
         }
 
 
+def _strip_xdata(data: bytes) -> bytes:
+    """Drop every XDATA tag (group codes 1000 to 1071) from an ASCII DXF."""
+    lines = data.replace(b"\r\n", b"\n").split(b"\n")
+    out: list[bytes] = []
+    for i in range(0, len(lines) - 1, 2):
+        code = lines[i].strip()
+        if code.isdigit() and 1000 <= int(code) <= 1071:
+            continue
+        out += [lines[i], lines[i + 1]]
+    return b"\n".join(out) + b"\n"
+
+
 def _measured_points(e: Any) -> dict[str, Any]:
     """The points a DIMENSION measures, for association to features (Phase 2 task 2).
 
@@ -200,8 +214,21 @@ def parse(data: bytes, file_id: str, version: str) -> tuple[Geometry, list[Flag]
     # recover.read takes raw bytes: it handles encodings, CRLF line endings and broken
     # structure, and reports what it fixed. ezdxf.read on a text stream returned an
     # empty document for CRLF files.
-    doc, auditor = recover.read(io.BytesIO(data))
     r = _Reader(file_id, version)
+    try:
+        doc, auditor = recover.read(io.BytesIO(data))
+    except const.DXFXDataError as exc:
+        # Malformed extended data (XDATA) makes ezdxf reject the whole file. LibreDWG's
+        # dwg2dxf writes such XDATA on dimensions. XDATA holds application settings, not
+        # geometry, so drop it and read again.
+        doc, auditor = recover.read(io.BytesIO(_strip_xdata(data)))
+        r.flags.append(
+            Flag(
+                code="DXF_RECOVERED",
+                severity="info",
+                message=f"invalid extended data (XDATA) removed before reading: {exc}",
+            )
+        )
     if auditor.has_errors or auditor.has_fixes:
         r.flags.append(
             Flag(
@@ -217,6 +244,29 @@ def parse(data: bytes, file_id: str, version: str) -> tuple[Geometry, list[Flag]
             views.append(layout.name)
         for e in entities:
             r.visit(e, layout.name, e.dxf.handle)
+    # Dimensions the auditor removed (invalid geometry blocks) are read from their raw tags.
+    seen = {e.locator.handle for e in r.entities}
+    rescued = [d for d in raw_dimensions(data) if d["handle"] not in seen]
+    for d in rescued:
+        loc = SourceLocator(
+            file_id=file_id,
+            version=version,
+            view="Model",
+            layer=d.pop("layer"),
+            handle=d.pop("handle"),
+            bbox=d.pop("bbox"),
+            confidence=1.0,
+        )
+        r.entities.append(GeometryEntity(kind="dimension", locator=loc, data=d))
+    if rescued:
+        r.flags.append(
+            Flag(
+                code="DXF_RECOVERED",
+                severity="info",
+                message=f"{len(rescued)} dimension(s) read from their own tags because their "
+                "geometry blocks were invalid; displayed text not available",
+            )
+        )
     title, tb_flags = extract(r.texts)
     r.flags.extend(tb_flags)
     units = INSUNITS.get(doc.header.get("$INSUNITS", 0))

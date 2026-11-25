@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-LABEL_SCHEMA_VERSION = "0.2.0"
+LABEL_SCHEMA_VERSION = "0.3.0"
 
 DimensionKind = Literal["linear", "diameter", "radius"]
 
@@ -48,3 +48,6 @@ class SyntheticLabel(BaseModel):
     dimensions: list[LabelDimension]
     title_block: dict[str, LabelText]
     features: list[LabelFeature] = []
+    # Added in 0.3.0 for the Knowledge Graph evaluation (plan Phase 3 exit criteria).
+    group: str | None = None  # parts in the same group are revisions of one part: truly similar
+    omitted: list[str] = []  # dimension targets left off the drawing on purpose

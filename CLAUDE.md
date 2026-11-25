@@ -41,12 +41,12 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 ```
 contracts/      edp-contracts: plug-in contract v0.1, artifact schemas, JSON Schema exports (contracts/schemas/)
 platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (not started)
-blocks/         b1_parser (DXF path, Phase 2), b2_interpretation (rule-based, Phase 3) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
+blocks/         b1_parser (DXF, DWG, PDF, STEP, IGES, STL), b2_interpretation (rule-based), b3_knowledge_graph (SQLite adapter) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
 orchestrator/   LangGraph graph, stub blocks 1-8, SQLite checkpointer (Phase 1 skeleton, ADR-0001)
 console/        React + Vite + TS console shell (Phase 1); served by edp_orchestrator.server
 mcp/            MCP server wrappers per block            (not started)
 eval/           edp-eval: golden manifests, metrics, synthetic drawing generator (plan §7, OD-7)
-deploy/         Helm, Argo CD, OpenTofu                  (not started; container runtime: Rancher Desktop, OD-21)
+deploy/         Helm, Argo CD, OpenTofu                  (out of POC scope: no containers, OD-21)
 docs/           adr/, progress/, reference/, requirements/, policies/, setup/, open-decisions.md
 scripts/ci/     edp-ci: provider-neutral CI steps and licence gate (not in Appendix A; added for Phase 0 task 5)
 ```
@@ -59,7 +59,7 @@ Local setup (OD-2, runs locally): `cp .env.example .env`, then fill in `OPENAI_A
 uv sync                                   # install the workspace (Python >= 3.11; uv)
 uv run pytest                             # all tests
 uv run ruff check .                       # lint
-uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src orchestrator/src blocks/b1_parser/src blocks/b2_interpretation/src
+uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src orchestrator/src blocks/b1_parser/src blocks/b2_interpretation/src blocks/b3_knowledge_graph/src
 uv run python -m edp_ci.license_gate      # licence policy gate
 uv run python -m edp_contracts.export     # regenerate contracts/schemas/*.json
 bash scripts/ci/run_ci.sh                 # everything CI runs
@@ -68,7 +68,13 @@ uv export --format requirements.txt --no-hashes --frozen -o requirements-dev.txt
 uv run python -m edp_orchestrator --file eval/golden/data/synthetic/syn-iso-plate-000.dxf --data-dir var [--real-blocks]   # walking skeleton
 uv run python -m edp_eval.suites.parser_dxf --golden eval/golden/data/synthetic --value-tol 1e-6 --n-bins 10
 uv run python -m edp_eval.suites.interpretation --golden eval/golden/data/synthetic --value-tol 1e-6
-uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/golden/data/synthetic   # console at http://127.0.0.1:8765
+uv run python -m edp_eval.synth --out eval/golden/data/families --families 24 --revisions 3 --seed 2026 --uri-prefix s3://edp-fabric/golden/families
+uv run python -m edp_eval.suites.knowledge_graph --golden eval/golden/data/families
+uv run python -m edp_eval.synth --out eval/golden/data/synthetic-dwg --dwg-from eval/golden/data/synthetic   # needs LibreDWG (setup guide §2)
+uv run python -m edp_eval.synth --out eval/golden/data/synthetic-pdf --pdf-from eval/golden/data/synthetic
+uv run python -m edp_eval.synth --out eval/golden/data/models --models 20 --seed 2026 --uri-prefix s3://edp-fabric/golden/models
+uv run python -m edp_eval.suites.models --golden eval/golden/data/models --value-tol 1e-6
+uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/golden/data/synthetic eval/golden/data/models   # console at http://127.0.0.1:8765
 (cd console && npm install && npm run build)                                    # build the console UI
 uv run python -m edp_eval.synth --out eval/golden/data/synthetic --count 80 --seed 2026 --uri-prefix s3://edp-fabric/golden/synthetic
 ```

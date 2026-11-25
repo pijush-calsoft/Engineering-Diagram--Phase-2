@@ -20,7 +20,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from edp_b1_parser import dxf
+from edp_b1_parser import dwg, dxf
 from edp_b2_interpretation import interpret
 from edp_contracts.artifacts.design_graph import DesignGraph
 from edp_eval.synth.labels import LabelFeature, SyntheticLabel
@@ -79,7 +79,10 @@ def _match(
 
 def evaluate_drawing(dxf_path: Path, label: SyntheticLabel, value_tol: float) -> dict[str, int]:
     data = dxf_path.read_bytes()
-    geometry, _, _ = dxf.parse(data, hashlib.sha256(data).hexdigest(), "golden")
+    file_id = hashlib.sha256(data).hexdigest()
+    if dxf_path.suffix.lower() == ".dwg":  # converted by LibreDWG first, as in the parser block
+        data, _ = dwg.convert(data)
+    geometry, _, _ = dxf.parse(data, file_id, "golden")
     graph, flags, _ = interpret(geometry)
     pred, link = _predicted(graph)
     matched = _match(label.features, pred, value_tol)
@@ -112,7 +115,8 @@ def run(golden: Path, value_tol: float) -> dict:
             raise ValueError(
                 f"{label_path} has label schema {label.schema_version}; regenerate the set (needs 0.2.0)"
             )
-        r = evaluate_drawing(golden / f"{label.id}.dxf", label, value_tol)
+        path = golden / f"{label.id}.dxf"
+        r = evaluate_drawing(path if path.is_file() else golden / f"{label.id}.dwg", label, value_tol)
         for group in ("overall", f"{label.profile}/{label.family}"):
             acc = totals.setdefault(group, {})
             for k, v in r.items():

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Proposed. On 2026-11-24 the owner answered OD-10 with "we will install" without naming a broker, so the plan's NATS JetStream is the working choice until confirmed |
+| Status | **Accepted** 2026-11-25. The owner delegated OD-10 ("its upto u"); the plan's NATS JetStream is chosen. The POC runs the in-process bus of ADR-0008 behind the same interface |
 | Date | 2026-11-24 |
 | Phase | Phase 0, task 7 (plan §6 Phase 0) |
 
@@ -43,7 +43,7 @@ The broker difference is logged as D5. The deck also uses different event names 
 
 ## Decision
 
-Proposed: **Option A, NATS JetStream**, for the `fabric.*`, `run.*` and `twin.*` subjects (plan §2.2, §4.1). The alternative the plan lists is Apache Kafka (plan §4.1).
+Accepted: **Option A, NATS JetStream**, for the `fabric.*`, `run.*` and `twin.*` subjects (plan §2.2, §4.1). The alternative the plan lists is Apache Kafka (plan §4.1).
 
 The deck's position is Kafka, with Pulsar as an option (D5, deck slides 62, 64). That choice is open as OD-10 and this ADR does not settle it.
 

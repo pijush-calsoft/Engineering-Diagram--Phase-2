@@ -7,7 +7,7 @@
 | Exit criterion served | "CI blocks any AGPL dependency imported in-process" (plan §6, Phase 0 exit criteria) |
 | Enforced by | [`scripts/ci/license_policy.toml`](../../scripts/ci/license_policy.toml), [`scripts/ci/src/edp_ci/license_gate.py`](../../scripts/ci/src/edp_ci/license_gate.py), [`scripts/ci/run_ci.sh`](../../scripts/ci/run_ci.sh) |
 | Status | Draft. Needs review by the accountable owner, and by legal where the plan flags it |
-| Last updated | 24 Nov 2026 |
+| Last updated | 25 Nov 2026 |
 
 **Licences in this document are taken from the plan.** The plan says: "Licenses are listed as understood at the time of writing; confirm each one in Phase 0 with the license scan and, where flagged, with legal" (plan §4 preamble). Nothing here has been confirmed by a scan or by legal yet.
 
@@ -93,6 +93,16 @@ The plan is the baseline (see [plan-vs-deck.md](../reference/plan-vs-deck.md)).
 | Licence check timing | "Each library is checked for licence in Sprint 1" (deck slide 65) | Phase 0 licence scan (§4 preamble, Phase 0 task 6) | Related to D1 (sprint vs phase timeline). Licence-check timing itself is not logged in plan-vs-deck.md |
 | Models to host, with their licences | Decision needed before Sprint 1 (deck slide 91) | Watch-list: check per model before deployment (§9) | OD-24 |
 
+### As built in Phase 2 (2026-11-25)
+
+| Component | Licence as installed | How it is used |
+|---|---|---|
+| LibreDWG 0.14 (official Windows build; 0.11 from conda-forge as fallback) | GPLv3 | Separate processes (`dwg2dxf`; `dxf2dwg`, `dwgread`, `dwgwrite` for test files only) with a time limit, outside the Python environment (`tools/`, git-ignored). No containers in the POC (OD-21, OD-49) |
+| cadquery-ocp (OCCT) | LGPL 2.1 with exception (plan §4.2) | Unmodified library. Needs VTK (BSD) at import |
+| pypdfium2 | Metadata: "BSD-3-Clause, Apache-2.0, dependency licenses" | Scoped exception in `license_policy.toml` after reading the bundled licence files (FreeType under the FTL; ICU's GPL text is the Autoconf exception only). Pending OD-31 |
+| trimesh | MIT | Library |
+| matplotlib | Declared by VTK; bundles licence text the gate refuses to waive | Not installed: excluded by `override-dependencies` in the root `pyproject.toml`. Nothing here imports it |
+
 ## 4. Deck tools not yet in the plan
 
 The deck names these tools. The plan does not list them, so the plan gives no licence for them. **They are not yet licence-checked.** Each one goes through the Phase 0 licence check before use (plan §4 preamble, §9; plan-vs-deck.md §3).
@@ -115,7 +125,7 @@ The deck names these tools. The plan does not list them, so the plan gives no li
 
 | Piece | What it does |
 |---|---|
-| `scripts/ci/license_policy.toml` | Lists licence ids per category: `allowed`, `conditional`, `denied_in_process`, plus `[exceptions]` (empty at the time of writing) |
+| `scripts/ci/license_policy.toml` | Lists licence ids per category: `allowed`, `conditional`, `denied_in_process`, plus `[exceptions]` (numpy, sqlite-vec and pypdfium2 at the time of writing, each with the metadata quoted) |
 | `scripts/ci/src/edp_ci/license_gate.py` | Reads the licence of every distribution installed in the Python environment it runs in, maps it to an SPDX-like id, classifies it, prints a table, and exits 1 on any `denied_in_process` or unexplained `unknown` result. It skips the workspace's own packages by exact name, read from `[tool.uv.workspace] members` in the root `pyproject.toml` |
 | `scripts/ci/tests/test_ci_license_gate.py` | Tests on synthetic metadata: an AGPL distribution fails the gate, LGPL warns, unknown fails, `OR` and `AND` expressions resolve correctly, an unmappable first field is not overridden by a classifier, a `License: UNKNOWN` placeholder is treated as absent, an AGPL classifier next to an unmappable one stays denied, "with" in free text (for example "Apache 2.0 with Commons Clause") is unknown, exceptions clear only unknown results and never GPL, AGPL, SSPL, BSL or RSAL text, workspace packages are skipped by exact name, `--repo-root` sets the policy and workspace. One integration test runs the gate on the current environment |
 | `scripts/ci/run_ci.sh` | Runs lint, type check, tests, the licence gate, then Syft (SBOM) and ScanCode if they are installed |

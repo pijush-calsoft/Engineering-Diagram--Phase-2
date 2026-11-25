@@ -47,7 +47,10 @@ class Interpretation:
             )
             flags.extend(graph_flags)
             metrics[art.uri] = m
-        review = any(f.severity in ("review", "block") for f in flags)
+        # Plan principle 3: low-confidence flags go to the Knowledge Graph for corroboration
+        # first (block 3), and to a person only if still unresolved. Other review flags
+        # (contradictions, features outside the part, unknown units) stop here.
+        review = any(f.severity in ("review", "block") and f.code != "LOW_CONFIDENCE" for f in flags)
         return BlockResult(
             run_id=req.run_id,
             status="needs_review" if review else "ok",

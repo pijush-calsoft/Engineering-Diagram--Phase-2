@@ -31,6 +31,172 @@
       "title": "GeometryEntity",
       "type": "object"
     },
+    "Hole3D": {
+      "description": "A cylindrical bore: the material is outside the cylinder (its axis lies outside the solid).",
+      "properties": {
+        "axis_direction": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Axis Direction",
+          "type": "array"
+        },
+        "axis_origin": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Axis Origin",
+          "type": "array"
+        },
+        "diameter": {
+          "title": "Diameter",
+          "type": "number"
+        },
+        "locators": {
+          "items": {
+            "$ref": "#/$defs/SourceLocator"
+          },
+          "title": "Locators",
+          "type": "array"
+        }
+      },
+      "required": [
+        "diameter",
+        "axis_origin",
+        "axis_direction",
+        "locators"
+      ],
+      "title": "Hole3D",
+      "type": "object"
+    },
+    "Solid": {
+      "properties": {
+        "bbox": {
+          "maxItems": 6,
+          "minItems": 6,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bbox",
+          "type": "array"
+        },
+        "edges": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Edges"
+        },
+        "faces": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "default": {},
+          "title": "Faces",
+          "type": "object"
+        },
+        "holes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Hole3D"
+          },
+          "title": "Holes",
+          "type": "array"
+        },
+        "locator": {
+          "$ref": "#/$defs/SourceLocator"
+        },
+        "lossy": {
+          "default": false,
+          "title": "Lossy",
+          "type": "boolean"
+        },
+        "through_holes_hint": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Through Holes Hint"
+        },
+        "volume": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume"
+        },
+        "watertight": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Watertight"
+        }
+      },
+      "required": [
+        "locator",
+        "bbox"
+      ],
+      "title": "Solid",
+      "type": "object"
+    },
     "SourceLocator": {
       "properties": {
         "bbox": {
@@ -239,9 +405,17 @@
       "title": "Scale"
     },
     "schema_version": {
-      "default": "0.1.0",
+      "default": "0.2.0",
       "title": "Schema Version",
       "type": "string"
+    },
+    "solids": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Solid"
+      },
+      "title": "Solids",
+      "type": "array"
     },
     "title_block": {
       "anyOf": [

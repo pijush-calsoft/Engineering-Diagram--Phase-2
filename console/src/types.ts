@@ -18,12 +18,32 @@ export type Entity = {
 
 export type TitleField = { value: string | null; locator: Locator } | null;
 
+export type Hole3D = {
+  diameter: number;
+  axis_origin: [number, number, number];
+  axis_direction: [number, number, number];
+  locators: Locator[];
+};
+
+export type Solid = {
+  locator: Locator;
+  bbox: [number, number, number, number, number, number];
+  volume: number | null;
+  faces: Record<string, number>;
+  edges: number | null;
+  holes: Hole3D[];
+  watertight: boolean | null;
+  through_holes_hint: number | null;
+  lossy: boolean;
+};
+
 export type Geometry = {
   views: string[];
   units: string | null;
   scale: string | null;
   entities: Entity[];
   title_block: Record<string, TitleField> | null;
+  solids?: Solid[];
 };
 
 export type DesignNode = {
@@ -66,3 +86,25 @@ export type BlockInfo = { name: string; version: string; real: boolean };
 export type RunEvent = { seq: number; subject: string; payload: Record<string, any> };
 
 export type BlockState = "waiting" | "running" | "done" | "review" | "failed";
+
+export type Evidence = {
+  part_number: string;
+  revision: string | null;
+  value: number;
+  value_mm: number;
+  agrees: boolean;
+  same_part: boolean;
+};
+
+export type SimilarParts = {
+  part: { revision_id: string; part_number: string; revision: string | null };
+  similar: { revision_id: string; part_number: string; revision: string | null; score: number }[];
+  corroborations: {
+    parameter: string;
+    name: string;
+    value: number;
+    status: "resolved" | "conflict" | "no_evidence";
+    confidence: number;
+    evidence: Evidence[];
+  }[];
+};

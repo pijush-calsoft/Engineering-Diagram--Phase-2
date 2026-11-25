@@ -587,6 +587,53 @@ summary {
   gap: 0.5rem;
 }
 
+/* Knowledge graph */
+.similar {
+  margin: 0 0 0.75rem;
+  padding-left: 1.4rem;
+}
+
+.similar li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.score {
+  color: var(--graphite);
+}
+
+.corroboration {
+  border-left: 3px solid var(--rule);
+  margin-bottom: 0.6rem;
+}
+
+.corroboration.status-resolved {
+  border-left-color: var(--ink);
+}
+
+.corroboration.status-conflict,
+.corroboration.status-no_evidence {
+  border-left-color: var(--redline);
+}
+
+.corroboration.status-conflict .param-source,
+.corroboration.status-no_evidence .param-source {
+  color: var(--redline);
+}
+
+.evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.4rem 0.2rem 1rem;
+  font-size: var(--step--1);
+  color: var(--graphite);
+}
+
+.evidence .disagrees {
+  color: var(--redline);
+}
+
 /* Event log */
 .log {
   border-top: 1px solid var(--rule);

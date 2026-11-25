@@ -8,11 +8,16 @@
     # via
     #   edp
     #   edp-eval
+-e ./blocks/b3_knowledge_graph
+    # via
+    #   edp
+    #   edp-eval
 -e ./contracts
     # via
     #   edp
     #   edp-b1-parser
     #   edp-b2-interpretation
+    #   edp-b3-knowledge-graph
     #   edp-catalogue
     #   edp-eval
     #   edp-fabric
@@ -31,12 +36,14 @@
     #   edp
     #   edp-b1-parser
     #   edp-b2-interpretation
+    #   edp-b3-knowledge-graph
     #   edp-orchestrator
 -e ./platform/kit
     # via
     #   edp
     #   edp-b1-parser
     #   edp-b2-interpretation
+    #   edp-b3-knowledge-graph
     #   edp-catalogue
     #   edp-fabric
     #   edp-orchestrator
@@ -57,6 +64,10 @@ anyio==4.16.0
     #   starlette
 ast-serialize==0.13.1
     # via mypy
+cadquery-ocp==8.0.1.1.0
+    # via edp-b1-parser
+cadquery-ocp-proxy==8.0.1.1.0
+    # via cadquery-ocp
 certifi==2026.11.20
     # via
     #   httpcore
@@ -69,6 +80,12 @@ click==8.5.1
     # via uvicorn
 colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
+contourpy==1.3.3 ; python_full_version < '3.12' and sys_platform == 'never'
+    # via matplotlib
+contourpy==1.4.0 ; python_full_version >= '3.12' and sys_platform == 'never'
+    # via matplotlib
+cycler==0.12.1 ; sys_platform == 'never'
+    # via matplotlib
 distro==1.9.0
     # via langsmith
 ezdxf==1.4.5
@@ -82,7 +99,9 @@ flexcache==0.3
 flexparser==0.4
     # via pint
 fonttools==4.68.0
-    # via ezdxf
+    # via
+    #   ezdxf
+    #   matplotlib
 h11==0.16.0
     # via
     #   httpcore
@@ -114,6 +133,8 @@ jsonpatch==1.48
     # via langchain-core
 jsonpointer==3.12
     # via jsonpatch
+kiwisolver==1.5.1 ; sys_platform == 'never'
+    # via matplotlib
 langchain-core==1.8.4
     # via
     #   edp-orchestrator
@@ -142,15 +163,25 @@ langsmith==0.16.1
     # via langchain-core
 librt==0.17.0 ; platform_python_implementation != 'PyPy'
     # via mypy
+matplotlib==3.11.2 ; sys_platform == 'never'
+    # via vtk
 mypy==2.4.1
 mypy-extensions==1.2.0
     # via
     #   librt
     #   mypy
 numpy==2.4.6 ; python_full_version < '3.12'
-    # via ezdxf
+    # via
+    #   contourpy
+    #   ezdxf
+    #   matplotlib
+    #   trimesh
 numpy==2.5.5 ; python_full_version >= '3.12'
-    # via ezdxf
+    # via
+    #   contourpy
+    #   ezdxf
+    #   matplotlib
+    #   trimesh
 opentelemetry-api==1.45.2
     # via fastapi
 orjson==3.13.0
@@ -163,9 +194,12 @@ packaging==26.4
     # via
     #   langchain-core
     #   langsmith
+    #   matplotlib
     #   pytest
 pathspec==1.1.1
     # via mypy
+pillow==13.0.0 ; sys_platform == 'never'
+    # via matplotlib
 pint==0.25.3 ; python_full_version < '3.12'
     # via edp-b2-interpretation
 pint==0.26.2 ; python_full_version >= '3.12'
@@ -178,6 +212,7 @@ pydantic==2.14.4
     # via
     #   edp-b1-parser
     #   edp-b2-interpretation
+    #   edp-b3-knowledge-graph
     #   edp-contracts
     #   edp-eval
     #   fastapi
@@ -189,8 +224,14 @@ pydantic-core==2.50.5
 pygments==2.21.0
     # via pytest
 pyparsing==3.3.3
-    # via ezdxf
+    # via
+    #   ezdxf
+    #   matplotlib
+pypdfium2==5.15.2
+    # via edp-b1-parser
 pytest==9.2.0
+python-dateutil==4.0.0 ; sys_platform == 'never'
+    # via matplotlib
 python-multipart==0.0.34
     # via edp-fabric
 pyyaml==6.0.4
@@ -212,6 +253,8 @@ starlette==1.10.0
     # via fastapi
 tenacity==9.2.1
     # via langchain-core
+trimesh==5.2.2
+    # via edp-b1-parser
 truststore==0.10.5 ; sys_platform != 'emscripten'
     # via
     #   httpcore2
@@ -238,6 +281,8 @@ typing-inspection==0.4.5
     # via
     #   fastapi
     #   pydantic
+tzdata==2026.6 ; sys_platform == 'never'
+    # via python-dateutil
 urllib3==2.8.0
     # via requests
 uuid-utils==0.19.0
@@ -246,6 +291,8 @@ uuid-utils==0.19.0
     #   langsmith
 uvicorn==0.54.0
     # via edp-orchestrator
+vtk==9.6.2
+    # via cadquery-ocp
 websockets==17.4
     # via
     #   langgraph-sdk

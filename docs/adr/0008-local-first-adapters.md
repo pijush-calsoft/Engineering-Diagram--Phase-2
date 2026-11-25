@@ -19,6 +19,7 @@ Every external service sits behind a small interface. Phase 1 ships a **local ad
 | Event bus | NATS JetStream (ADR-0002, OD-10) | In-memory bus | `edp_kit.events.EventBus` |
 | Object storage and dataset versions | SeaweedFS + lakeFS (ADR-0004) | Filesystem zones `raw`, `cleaned`, `final`, with content-hash commit ids | `edp_fabric.FabricStore` |
 | Catalogue store, element-level lineage | PostgreSQL (+ Marquez for dataset lineage) | SQLite (Python standard library) | `edp_catalogue.Catalogue` |
+| Knowledge Graph store | Apache AGE on Postgres or Neo4j Community (ADR-0003, Proposed) | SQLite property graph | `edp_b3_knowledge_graph.GraphStore` |
 | Orchestrator checkpointer | LangGraph Postgres checkpointer (ADR-0001) | LangGraph SQLite checkpointer | LangGraph `Checkpointer` |
 | Block transport | FastAPI service per block (plan §3) | In-process call; the same blocks are also served over HTTP by `edp_kit.service` | `Block` protocol |
 

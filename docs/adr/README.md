@@ -10,7 +10,7 @@ New ADRs start from [0000-template.md](0000-template.md).
 |---|---|---|---|---|
 | [0000](0000-template.md) | ADR template | n/a | 2026-11-24 | |
 | [0001](0001-orchestrator.md) | Orchestrator | **Accepted** | 2026-11-24 | OD-9 (decided), OD-15 |
-| [0002](0002-event-bus.md) | Event bus | Proposed | 2026-11-24 | OD-10, OD-15 |
+| [0002](0002-event-bus.md) | Event bus | **Accepted** | 2026-11-25 | OD-10, OD-15 |
 | [0003](0003-graph-store.md) | Graph store | Proposed | 2026-11-24 | None yet (see the ADR) |
 | [0004](0004-object-storage.md) | Object storage and dataset versioning | Proposed | 2026-11-24 | OD-2, OD-20, OD-21. None yet for L2 (see the ADR) |
 | [0005](0005-model-hosting.md) | Model hosting | **Accepted, amended**: hosted APIs only, OpenAI | 2026-11-24 | OD-5, OD-11, OD-37 (decided), OD-39, OD-43 |
@@ -30,7 +30,7 @@ All eight slots the plan asks for are now used: ADR-0006 to 0008 record OD-4, OD
 | Accepted | Signed off by the deciding owner. Owner role and date recorded in [open-decisions.md](../open-decisions.md) |
 | Superseded | Replaced by a later ADR, named in the Status line |
 
-ADR-0001, 0005, 0006, 0007 and 0008 are **Accepted** from the project owner's answers on 2026-11-24 (see [open-decisions.md](../open-decisions.md)). ADR-0002 to 0004 are **Proposed**. Each proposal states the plan's primary choice as the proposal (for the graph store, which the plan does not rank, the option it lists first; see ADR-0003), because the plan is the baseline in this repository ([plan-vs-deck.md](../reference/plan-vs-deck.md)). For every topic the deck says something different or less specific; each ADR records the deck position with its slide numbers.
+ADR-0001, 0005, 0006, 0007 and 0008 are **Accepted** from the project owner's answers on 2026-11-24, and ADR-0002 on 2026-11-25 (see [open-decisions.md](../open-decisions.md)). ADR-0003 and 0004 are **Proposed**. Each proposal states the plan's primary choice as the proposal (for the graph store, which the plan does not rank, the option it lists first; see ADR-0003), because the plan is the baseline in this repository ([plan-vs-deck.md](../reference/plan-vs-deck.md)). For every topic the deck says something different or less specific; each ADR records the deck position with its slide numbers.
 
 Plan §8 gives "Contract, ADRs, orchestrator, reviews" to the tech lead / architect role. Neither the plan nor the deck says who accepts an ADR. The project owner's answers of 2026-11-24 are treated as acceptance for the ADRs they decide; the rest stay Proposed.
 

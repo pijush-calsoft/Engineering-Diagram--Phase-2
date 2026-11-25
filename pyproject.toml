@@ -13,6 +13,7 @@ dependencies = [
     "edp-orchestrator",
     "edp-b1-parser",
     "edp-b2-interpretation",
+    "edp-b3-knowledge-graph",
 ]
 
 [dependency-groups]
@@ -20,9 +21,14 @@ dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.10"]
 
 [tool.uv]
 package = false
+# vtk (needed by cadquery-ocp at import) declares matplotlib for its plotting modules, which
+# this project does not use. matplotlib bundles FreeType text the licence gate rightly refuses
+# to waive; the never-matching marker keeps it (and Pillow, contourpy, kiwisolver, cycler,
+# python-dateutil) out of the environment. See docs/progress/phase-2.md.
+override-dependencies = ["matplotlib; sys_platform == 'never'"]
 
 [tool.uv.workspace]
-members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "orchestrator", "blocks/b1_parser", "blocks/b2_interpretation"]
+members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "orchestrator", "blocks/b1_parser", "blocks/b2_interpretation", "blocks/b3_knowledge_graph"]
 
 [tool.uv.sources]
 edp-contracts = { workspace = true }
@@ -34,9 +40,10 @@ edp-catalogue = { workspace = true }
 edp-orchestrator = { workspace = true }
 edp-b1-parser = { workspace = true }
 edp-b2-interpretation = { workspace = true }
+edp-b3-knowledge-graph = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "orchestrator/tests", "blocks/b1_parser/tests", "blocks/b2_interpretation/tests"]
+testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "orchestrator/tests", "blocks/b1_parser/tests", "blocks/b2_interpretation/tests", "blocks/b3_knowledge_graph/tests"]
 addopts = "-q"
 
 [tool.ruff]
@@ -47,9 +54,14 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_orchestrator", "edp_b1_parser", "edp_b2_interpretation"]
+known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_orchestrator", "edp_b1_parser", "edp_b2_interpretation", "edp_b3_knowledge_graph"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = false
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# Third-party packages without type information (no stubs, no py.typed).
+module = ["OCP.*", "pypdfium2", "pypdfium2.*", "trimesh", "trimesh.*"]
+ignore_missing_imports = true

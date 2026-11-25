@@ -4,7 +4,7 @@ import { DrawingSheet } from "./components/DrawingSheet";
 import { Inspector, type Selection } from "./components/Inspector";
 import { Pipeline } from "./components/Pipeline";
 import { sheetBox } from "./geometry";
-import type { BlockInfo, BlockState, DesignGraph, Flag, Geometry, RunEvent, RunView } from "./types";
+import type { BlockInfo, BlockState, DesignGraph, Flag, Geometry, RunEvent, RunView, SimilarParts } from "./types";
 
 const RUN_STATE_TEXT: Record<string, string> = {
   completed: "Completed",
@@ -31,6 +31,7 @@ export function App() {
   const [states, setStates] = useState<Record<string, BlockState>>({});
   const [geometry, setGeometry] = useState<Geometry | null>(null);
   const [graph, setGraph] = useState<DesignGraph | null>(null);
+  const [similar, setSimilar] = useState<SimilarParts | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
   const loaded = useRef<Set<string>>(new Set());
@@ -55,6 +56,9 @@ export function App() {
       } else if (a.kind === "design_graph") {
         loaded.current.add(a.uri);
         setGraph(await api.artifact<DesignGraph>(a.uri));
+      } else if (a.kind === "similar_parts" && a.uri.startsWith("fabric://")) {
+        loaded.current.add(a.uri);
+        setSimilar(await api.artifact<SimilarParts>(a.uri));
       }
     }
   }, []);
@@ -89,6 +93,7 @@ export function App() {
     setStates({});
     setGeometry(null);
     setGraph(null);
+    setSimilar(null);
     setSelection(null);
     loaded.current = new Set();
     try {
@@ -121,9 +126,24 @@ export function App() {
   }, [graph]);
 
   const flags: Flag[] = useMemo(() => view?.status.results.flatMap((r) => r.flags) ?? [], [view]);
+  // Values the knowledge graph confirmed are no longer open: drop them from the red marks.
+  const settled = useMemo(() => {
+    const ids = new Set(similar?.corroborations.filter((c) => c.status === "resolved").map((c) => c.parameter));
+    const handles = new Set<string>();
+    for (const n of graph?.nodes ?? []) {
+      if (ids.has(n.id)) n.sources.forEach((s) => s.handle && handles.add(s.handle));
+    }
+    return { ids, handles };
+  }, [similar, graph]);
   const flagged = useMemo(
-    () => new Set(flags.map((f) => f.target?.handle).filter((h): h is string => !!h)),
-    [flags],
+    () =>
+      new Set(
+        flags
+          .filter((f) => f.severity !== "info")
+          .map((f) => f.target?.handle)
+          .filter((h): h is string => !!h && !settled.handles.has(h)),
+      ),
+    [flags, settled],
   );
   const box = useMemo(() => (geometry ? sheetBox(geometry.entities) : null), [geometry]);
   const tb = geometry?.title_block ?? {};
@@ -230,7 +250,12 @@ export function App() {
           flagged={flagged}
           titleBlock={titleBlock}
           empty={
-            runId ? (
+            geometry?.solids?.length ? (
+              <p>
+                This is a 3D model ({geometry.solids.length} solid{geometry.solids.length > 1 ? "s" : ""}). What was read
+                from it is on the right; a 3D view comes later.
+              </p>
+            ) : runId ? (
               <p>Reading the drawing…</p>
             ) : (
               <p>Run a sample drawing or upload a DXF. The parsed drawing appears here, and any value you select is traced back to it.</p>
@@ -240,6 +265,8 @@ export function App() {
         <Inspector
           geometry={geometry}
           graph={graph}
+          similar={similar}
+          settled={settled}
           flags={flags}
           box={box}
           view={view}

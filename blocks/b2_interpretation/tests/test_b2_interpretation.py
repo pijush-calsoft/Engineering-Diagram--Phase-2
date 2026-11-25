@@ -155,7 +155,7 @@ def test_parser_and_interpretation_in_the_orchestrator(tmp_path, monkeypatch):
     assert graph_art.artifact.sources[0].file_id == up.file_id
 
 
-def test_block_reports_needs_review_on_low_confidence(tmp_path):
+def test_low_confidence_goes_to_the_knowledge_graph_not_to_review(tmp_path):
     fabric = FabricStore(tmp_path)
     doc, msp = plate()
     msp.add_circle((20, 15), 3)
@@ -164,7 +164,21 @@ def test_block_reports_needs_review_on_low_confidence(tmp_path):
     up = fabric.ingest("p.dxf", buf.getvalue().encode(), uploader="t")
     geo = DrawingParser(fabric).run(BlockRequest(run_id="r", inputs=[up.as_artifact()])).outputs
     result = Interpretation(fabric).run(BlockRequest(run_id="r", inputs=geo))
-    assert result.status == "needs_review" and result.outputs[0].kind == "design_graph"
+    # Plan principle 3: low-confidence values are passed on for corroboration (block 3).
+    assert result.status == "ok" and result.outputs[0].kind == "design_graph"
+    assert {f.code for f in result.flags} == {"LOW_CONFIDENCE"}
+    # A contradiction still needs a person.
+    doc2, msp2 = plate()
+    msp2.add_circle((20, 15), 3)
+    for text in ("6", "7"):
+        msp2.add_diameter_dim(
+            center=(20, 15), radius=3, angle=45, text=text, dimstyle="EZ_RADIUS", override={"dimlfac": 1}
+        ).render()
+    buf2 = io.StringIO()
+    doc2.write(buf2)
+    up2 = fabric.ingest("q.dxf", buf2.getvalue().encode(), uploader="t")
+    geo2 = DrawingParser(fabric).run(BlockRequest(run_id="r2", inputs=[up2.as_artifact()])).outputs
+    assert Interpretation(fabric).run(BlockRequest(run_id="r2", inputs=geo2)).status == "needs_review"
 
 
 def test_suite_scores_and_can_fail(tmp_path):
