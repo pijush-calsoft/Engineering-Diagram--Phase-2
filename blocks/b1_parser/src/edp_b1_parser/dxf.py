@@ -127,6 +127,7 @@ class _Reader:
             "displayed": displayed,
             "value": value if value is not None else measured,
             **_measured_points(e),
+            **_text_placement(e),
         }
 
 
@@ -163,6 +164,17 @@ def _displayed_text(e: Any) -> str | None:
             if part.dxftype() == "TEXT":
                 return str(part.dxf.text)
     return override if override not in ("", "<>") else None
+
+
+def _text_placement(e: Any) -> dict[str, Any]:
+    """Where the dimension text is drawn, and its height (from the rendered geometry block)."""
+    block = e.get_geometry_block()
+    for part in block or []:
+        if part.dxftype() in ("MTEXT", "TEXT"):
+            at = part.dxf.insert
+            height = part.dxf.get("char_height" if part.dxftype() == "MTEXT" else "height")
+            return {"text_at": [float(at[0]), float(at[1])], "text_height": float(height) if height else None}
+    return {}
 
 
 def _geometry(e: Any) -> dict[str, Any]:

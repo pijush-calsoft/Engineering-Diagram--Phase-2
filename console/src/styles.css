@@ -1,0 +1,683 @@
+/* Drafting-office palette: vellum, ink, graphite, redline pencil, trace cyan. */
+:root {
+  --vellum: #eef1f0;
+  --sheet: #fbfcfb;
+  --ink: #1f2b33;
+  --graphite: #66737c;
+  --rule: #c9d1d4;
+  --grid: #e3e8e9;
+  --redline: #c62b35;
+  --redline-wash: #fbe9ea;
+  --trace: #147a93;
+  --trace-wash: #e2f1f5;
+
+  --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", sans-serif;
+
+  --step--1: 0.8125rem;
+  --step-0: 0.9375rem;
+  --step-1: 1.125rem;
+  --step-2: 1.5rem;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--vellum);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: var(--step-0);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--step-2);
+}
+
+h2 {
+  font-size: var(--step-1);
+  margin-bottom: 0.5rem;
+}
+
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: var(--ink);
+  color: var(--sheet);
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--step-0);
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--ink);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--trace);
+  outline-offset: 2px;
+}
+
+select,
+input {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.35rem 0.5rem;
+}
+
+.quiet {
+  color: var(--graphite);
+  margin: 0;
+}
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  height: 100%;
+}
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.controls label {
+  color: var(--graphite);
+}
+
+.controls select {
+  max-width: 16rem;
+}
+
+.error {
+  margin: 0;
+  padding: 0.6rem 1.25rem;
+  background: var(--redline-wash);
+  color: var(--redline);
+  border-bottom: 1px solid var(--redline);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 15.5rem minmax(0, 1fr) 21rem;
+  min-height: 0;
+}
+
+/* Pipeline */
+.pipeline {
+  border-right: 1px solid var(--rule);
+  min-height: 36rem;
+  padding: 0.5rem 0;
+}
+
+.pipeline .react-flow {
+  --xy-background-color: transparent;
+  color-scheme: light;
+  background: transparent;
+}
+
+.pipeline .react-flow__edge-path {
+  stroke: var(--rule);
+  stroke-width: 1.5;
+}
+
+.pipeline .edge-reached .react-flow__edge-path {
+  stroke: var(--ink);
+}
+
+.pipeline .react-flow__handle {
+  opacity: 0;
+}
+
+.block-card {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.55rem;
+  width: 13.5rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-left-width: 4px;
+  border-radius: 2px;
+  font-size: var(--step--1);
+}
+
+.block-index {
+  grid-row: span 2;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--step-1);
+  color: var(--graphite);
+  align-self: center;
+}
+
+.block-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--step-0);
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+}
+
+.block-stub {
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--graphite);
+  border: 1px dashed var(--graphite);
+  border-radius: 2px;
+  padding: 0 0.25rem;
+}
+
+.block-output,
+.block-state {
+  color: var(--graphite);
+}
+
+.block-state {
+  grid-column: 2;
+}
+
+.block-card.state-running {
+  border-left-color: var(--trace);
+}
+
+.block-card.state-running .block-state {
+  color: var(--trace);
+}
+
+.block-card.state-done {
+  border-left-color: var(--ink);
+}
+
+.block-card.state-done .block-index {
+  color: var(--ink);
+}
+
+.block-card.state-review,
+.block-card.state-failed {
+  border-left-color: var(--redline);
+  background: var(--redline-wash);
+}
+
+.block-card.state-review .block-state,
+.block-card.state-failed .block-state {
+  color: var(--redline);
+  font-weight: 600;
+}
+
+/* Drawing sheet */
+.sheet {
+  padding: 1rem;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.sheet-empty {
+  align-items: center;
+  justify-content: center;
+  color: var(--graphite);
+  text-align: center;
+}
+
+.sheet-empty p {
+  max-width: 34ch;
+}
+
+.sheet-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+}
+
+.sheet-field svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.sheet-field svg * {
+  vector-effect: non-scaling-stroke;
+}
+
+.frame-outer,
+.frame-inner {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+
+.frame-inner {
+  stroke-width: 0.8;
+}
+
+.zone-band text {
+  fill: var(--graphite);
+  font-family: var(--display);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.zone-grid line {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+
+.ent line,
+.ent circle,
+.ent path,
+.ent polyline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+
+.sheet-text,
+.dim-text {
+  fill: var(--ink);
+  font-family: var(--body);
+}
+
+.ent-dimension .dim-measure,
+.ent-dimension .dim-point {
+  display: none;
+}
+
+.ent-dimension.traced .dim-measure,
+.ent-dimension.traced .dim-point {
+  display: inline;
+  stroke-dasharray: 4 3;
+  fill: none;
+}
+
+.dim-text {
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.ent-dimension .dim-text {
+  fill: var(--graphite);
+}
+
+.ent.flagged line,
+.ent.flagged circle,
+.ent.flagged path {
+  stroke: var(--redline);
+}
+
+.ent.flagged text {
+  fill: var(--redline);
+}
+
+.ent.traced line,
+.ent.traced circle,
+.ent.traced path,
+.ent.traced polyline {
+  stroke: var(--trace);
+  stroke-width: 2.6;
+}
+
+.ent.traced text {
+  fill: var(--trace);
+  font-weight: 700;
+}
+
+/* Title block: the sheet's run record, set like a drawing title block. */
+.title-block {
+  align-self: flex-end;
+  margin: 0 1rem 1rem;
+  border-collapse: collapse;
+  background: var(--sheet);
+  border: 2px solid var(--ink);
+  font-size: var(--step--1);
+  min-width: 22rem;
+  max-width: calc(100% - 2rem);
+}
+
+.title-block td {
+  border: 1px solid var(--ink);
+  padding: 0.2rem 0.45rem 0.3rem;
+  vertical-align: top;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--step-0);
+}
+
+.title-block td span {
+  display: block;
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 0.6875rem;
+  color: var(--graphite);
+}
+
+.run-state.state-awaiting_review,
+.run-state.state-stopped,
+.run-state.state-rejected {
+  color: var(--redline);
+}
+
+/* Inspector */
+.inspector {
+  border-left: 1px solid var(--rule);
+  padding: 1rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.inspector section + section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 1rem;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--graphite);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.features,
+.params,
+.flags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.features > li + li {
+  margin-top: 0.75rem;
+}
+
+.feature,
+.param,
+.flag {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--body);
+  font-weight: 400;
+  padding: 0.25rem 0.4rem;
+}
+
+.feature {
+  justify-content: space-between;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--step-0);
+}
+
+.zone {
+  font-family: var(--body);
+  font-weight: 400;
+  color: var(--graphite);
+  font-size: var(--step--1);
+}
+
+.params {
+  margin-left: 0.6rem;
+  border-left: 1px solid var(--rule);
+}
+
+.param {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  column-gap: 0.5rem;
+  font-size: var(--step--1);
+}
+
+.param-name {
+  color: var(--graphite);
+}
+
+.param-value {
+  font-weight: 600;
+}
+
+.param-source {
+  grid-column: 2;
+  color: var(--graphite);
+  font-size: 0.75rem;
+}
+
+.param.assoc-geometry_only .param-source {
+  color: var(--redline);
+}
+
+.feature:hover,
+.param:hover,
+.flag:not(:disabled):hover {
+  border-color: var(--rule);
+}
+
+.is-selected {
+  background: var(--trace-wash);
+  border-color: var(--trace) !important;
+}
+
+details {
+  margin-top: 0.75rem;
+}
+
+summary {
+  cursor: pointer;
+  color: var(--graphite);
+}
+
+.flag {
+  flex-direction: column;
+  gap: 0.1rem;
+  border-left: 3px solid var(--graphite);
+  margin-bottom: 0.4rem;
+}
+
+.flag:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.flag.severity-review,
+.flag.severity-block {
+  border-left-color: var(--redline);
+}
+
+.flag-code {
+  font-family: var(--display);
+  font-weight: 600;
+}
+
+.flag-message {
+  font-size: var(--step--1);
+  color: var(--graphite);
+}
+
+.review {
+  background: var(--redline-wash);
+  border: 1px solid var(--redline);
+  border-radius: 2px;
+  padding: 0.75rem;
+}
+
+.review p {
+  margin: 0 0 0.6rem;
+}
+
+.review label {
+  display: block;
+  font-size: var(--step--1);
+  color: var(--graphite);
+}
+
+.review input {
+  width: 100%;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Event log */
+.log {
+  border-top: 1px solid var(--rule);
+  padding: 0.6rem 1.25rem 0.8rem;
+  max-height: 9.5rem;
+  overflow-y: auto;
+}
+
+.log h2 {
+  font-size: var(--step-0);
+}
+
+.log ol {
+  margin: 0;
+  padding-left: 2.25rem;
+  font-size: var(--step--1);
+  columns: 3 18rem;
+}
+
+.log li {
+  break-inside: avoid;
+}
+
+.log-subject {
+  margin-right: 0.5rem;
+}
+
+.log-block,
+.log-status {
+  color: var(--graphite);
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 70rem) {
+  .workspace {
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+  }
+
+  .inspector {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+}
+
+@media (max-width: 44rem) {
+  /* On phones the page scrolls instead of fitting the viewport. */
+  html,
+  body,
+  #root,
+  .app {
+    height: auto;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .log {
+    max-height: none;
+  }
+
+  .pipeline {
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    min-height: 34rem;
+  }
+
+  .sheet {
+    padding: 0.5rem;
+  }
+
+  .title-block {
+    margin: 0.5rem;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  .masthead {
+    padding: 0.75rem;
+  }
+
+  .controls select {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

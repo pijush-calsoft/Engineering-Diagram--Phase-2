@@ -26,7 +26,7 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 - **Client data stays out of the repo** (plan principle 7). No drawings, models or results in git, and no client names in code or docs.
 - **No personal names** in docs. Use roles.
 - Git commit messages carry no AI attribution (user's global instruction).
-- **Before every commit:** run `bash scripts/ci/run_ci.sh` *after the last edit*, and read `git diff --cached -- '*pyproject.toml' uv.lock requirements*.txt`. Every new dependency must be one you added on purpose. (On 2026-11-25 an unrelated package, `robocrew`, entered the root dependencies outside the planned work, was swept into a commit by `git add -A`, and was removed in `96e293d`.)
+- **Before every commit:** run `bash scripts/ci/run_ci.sh` *after the last edit* and check **its own exit code** (never through a pipe such as `| grep`, which hides failures; that let a failing CI through on 2026-11-25), and read `git diff --cached -- '*pyproject.toml' uv.lock requirements*.txt`. Every new dependency must be one you added on purpose. (On 2026-11-25 an unrelated package, `robocrew`, entered the root dependencies outside the planned work, was swept into a commit by `git add -A`, and was removed in `96e293d`.)
 - **Test file names must be unique across the repo** (pytest default import mode). Importlib mode is not used: it names test modules after their path, and the top-level `platform/` folder then hides Python's standard `platform` module.
 
 ## Updating the docs (required at the end of every phase or work session)
@@ -43,7 +43,7 @@ contracts/      edp-contracts: plug-in contract v0.1, artifact schemas, JSON Sch
 platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (not started)
 blocks/         b1_parser (DXF path, Phase 2), b2_interpretation (rule-based, Phase 3) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
 orchestrator/   LangGraph graph, stub blocks 1-8, SQLite checkpointer (Phase 1 skeleton, ADR-0001)
-console/        React app                                (Phase 1, not started)
+console/        React + Vite + TS console shell (Phase 1); served by edp_orchestrator.server
 mcp/            MCP server wrappers per block            (not started)
 eval/           edp-eval: golden manifests, metrics, synthetic drawing generator (plan §7, OD-7)
 deploy/         Helm, Argo CD, OpenTofu                  (not started; container runtime: Rancher Desktop, OD-21)
@@ -68,6 +68,8 @@ uv export --format requirements.txt --no-hashes --frozen -o requirements-dev.txt
 uv run python -m edp_orchestrator --file eval/golden/data/synthetic/syn-iso-plate-000.dxf --data-dir var [--real-blocks]   # walking skeleton
 uv run python -m edp_eval.suites.parser_dxf --golden eval/golden/data/synthetic --value-tol 1e-6 --n-bins 10
 uv run python -m edp_eval.suites.interpretation --golden eval/golden/data/synthetic --value-tol 1e-6
+uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/golden/data/synthetic   # console at http://127.0.0.1:8765
+(cd console && npm install && npm run build)                                    # build the console UI
 uv run python -m edp_eval.synth --out eval/golden/data/synthetic --count 80 --seed 2026 --uri-prefix s3://edp-fabric/golden/synthetic
 ```
 

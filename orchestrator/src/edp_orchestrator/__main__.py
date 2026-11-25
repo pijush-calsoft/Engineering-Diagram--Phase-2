@@ -19,8 +19,11 @@ parser = argparse.ArgumentParser(prog="python -m edp_orchestrator", description=
 parser.add_argument("--file", type=Path, required=True, help="drawing or model to upload")
 parser.add_argument("--data-dir", type=Path, required=True, help="local data folder (git-ignored, e.g. var)")
 parser.add_argument("--run-id", default=None, help="run id; a new one is made if omitted")
-parser.add_argument("--real-blocks", action="store_true",
-                    help="use blocks registered through the edp.blocks entry point; stubs for the rest")
+parser.add_argument(
+    "--real-blocks",
+    action="store_true",
+    help="use blocks registered through the edp.blocks entry point; stubs for the rest",
+)
 args = parser.parse_args()
 
 args.data_dir.mkdir(parents=True, exist_ok=True)

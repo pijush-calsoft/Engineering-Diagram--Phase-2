@@ -60,7 +60,7 @@ These are listed with the owner role the deck gives. They overlap with the items
 
 | ID | Question | Status | Notes |
 |---|---|---|---|
-| OD-31 | Approve `PSF-2.0` and `ISC` as allowed licences, and `0BSD`, `Zlib` and `CC0-1.0` (numpy). None is named in plan §9 | Open | The gate passes `typing_extensions` (PSF-2.0, a pydantic dependency) under this proposal. `numpy` (needed by ezdxf) passes through a scoped `[exceptions]` entry that quotes its metadata. [license-policy.md](policies/license-policy.md) §1 |
+| OD-31 | Approve `PSF-2.0` and `ISC` as allowed licences, and `0BSD`, `Zlib` and `CC0-1.0` (numpy), and `OFL-1.1` (console fonts). None is named in plan §9 | Open | The gate passes `typing_extensions` (PSF-2.0, a pydantic dependency) under this proposal. `numpy` (needed by ezdxf) passes through a scoped `[exceptions]` entry that quotes its metadata. [license-policy.md](policies/license-policy.md) §1 |
 | OD-32 | Confirm how unversioned classifiers are treated: "BSD License" is allowed, while "Apache Software License" and "Python Software Foundation License" fail as unknown | Open | Plan §9 says "BSD" without a variant and names Apache 2.0 only |
 | OD-33 | Confirm the denied ids derived from the §9 watch-list (SSPL, BUSL, RSAL variants, GPL-1.0) | Open | [license-policy.md](policies/license-policy.md) §6 |
 | OD-34 | Confirm `OCCT-exception-1.0` as the only accepted SPDX `WITH` exception | Open | Plan §4.2 says only "OCCT is LGPL 2.1 with exception" |
@@ -80,6 +80,7 @@ These are listed with the owner role the deck gives. They overlap with the items
 | OD-43 | Which OpenAI models for text, vision, code generation and LLM-as-judge? | Open | `.env` slots `EDP_LLM_MODEL_TEXT`, `_VISION`, `_CODE`, `_JUDGE` are blank. The nightly gateway benchmark (plan Phase 1, §7 Gateway row) can inform the choice |
 | OD-44 | Virus scanner for uploads (plan Phase 1: "virus and type check") | Open | Type check from content is built in `edp_fabric`; no scanner chosen. Plan and deck name none |
 | OD-45 | Geometric coincidence tolerance for dimension association and feature rules | Open | `REL_TOL = 1e-6` (relative) in `edp_b2_interpretation.recognise`: exact for CAD-written files. Real drawings may need a looser, possibly per-client value (plan Phase 2 risks: "per-client drafting profiles stored as configuration") |
+| OD-46 | npm registry access: `registry.npmjs.org` resets the connection on this network | Open | `console/.npmrc` uses `registry.yarnpkg.com` (same packages). Confirm this is acceptable, or provide the company proxy or mirror |
 
 ## Detail items tracked in their own documents
 

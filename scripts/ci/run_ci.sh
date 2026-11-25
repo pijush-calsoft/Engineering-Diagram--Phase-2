@@ -30,6 +30,13 @@ diff <(uv export --format requirements.txt --no-dev --no-hashes --frozen | grep 
 step "Licence gate (plan section 9)"
 uv run python -m edp_ci.license_gate --repo-root .
 
+step "Console: npm licence gate and type check (plan §9, §4.3)"
+if command -v node >/dev/null 2>&1 && [ -d console/node_modules ]; then
+    (cd console && npm run --silent licences && npm run --silent typecheck && echo "console type check passed")
+else
+    echo "SKIPPED: run 'npm install' in console/ first (needs Node.js; registry in console/.npmrc)"
+fi
+
 step "SBOM (Syft)"
 if command -v syft >/dev/null 2>&1; then
     mkdir -p build

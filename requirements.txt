@@ -63,6 +63,8 @@ certifi==2026.11.20
     #   requests
 charset-normalizer==3.5.3
     # via requests
+click==8.5.1
+    # via uvicorn
 distro==1.9.0
     # via langsmith
 ezdxf==1.4.5
@@ -81,6 +83,7 @@ h11==0.16.0
     # via
     #   httpcore
     #   httpcore2
+    #   uvicorn
 httpcore==1.0.9
     # via httpx
 httpcore2==2.16.2 ; sys_platform != 'emscripten'
@@ -215,6 +218,8 @@ uuid-utils==0.19.0
     # via
     #   langchain-core
     #   langsmith
+uvicorn==0.54.0
+    # via edp-orchestrator
 websockets==17.4
     # via
     #   langgraph-sdk

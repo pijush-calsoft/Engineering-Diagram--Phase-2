@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Plan reference | plan §6 Phase 1 (4 weeks, R1) |
-| Status | In progress. Walking skeleton runs locally; Model Gateway, console and MCP wrappers not started |
+| Status | In progress. Walking skeleton and console shell built; Model Gateway and MCP wrappers not started |
 | Last updated | 2026-11-25 |
 
 ## 1. Approach
@@ -31,7 +31,7 @@ New dependencies: fastapi, httpx, python-multipart, langgraph, langgraph-checkpo
 
 | Criterion | Status |
 |---|---|
-| A file uploaded in the console produces a versioned dataset, a run with eight stub block results, lineage visible in Marquez, and an end-to-end trace in Langfuse | **Partly met.** Upload → versioned dataset → run with eight stub results → element-level lineage from the report back to the file commit works and is tested (`test_upload_to_eight_stub_results_with_lineage`). Not yet: upload from the console (console not built), Marquez and Langfuse (need containers, OD-21) |
+| A file uploaded in the console produces a versioned dataset, a run with eight stub block results, lineage visible in Marquez, and an end-to-end trace in Langfuse | **Partly met.** Upload from the console works (2026-11-25). Upload → versioned dataset → run with eight stub results → element-level lineage from the report back to the file commit works and is tested (`test_upload_to_eight_stub_results_with_lineage`). Not yet: upload from the console (console not built), Marquez and Langfuse (need containers, OD-21) |
 | Every gateway call is authenticated with mTLS and logged with tokens and cost | **Not started.** Gateway not built; mTLS needs step-ca (OD-21) |
 | Restarting any block mid-run resumes from the checkpoint | **Met locally.** `test_restart_mid_run_resumes_from_checkpoint`: block 5 crashes, a new orchestrator instance on the same checkpoint store resumes, and blocks 1 to 4 are not re-run |
 
@@ -59,6 +59,6 @@ report traces back to: <file hash>@<commit>
 ## 6. Next in Phase 1
 
 1. **Model Gateway client**: OpenAI through LiteLLM, with usage logging and guardrails. Needs `OPENAI_API_KEY` in `.env` and model names (OD-43).
-2. **Console shell**: React + Vite + TypeScript, chat panel, pipeline map with live block status from `run.*` events (plan Phase 1, §4.3). Needs Node.js, which is installed (v24).
+2. **Console shell: built 2026-11-25** ([console/README.md](../../console/README.md)). Pipeline map with live block status over SSE, drawing sheet with source tracing, inspector, review actions, run events; local console API `edp_orchestrator.server`. The chat panel waits for the Model Gateway (OD-43).
 3. **MCP wrappers** per block (plan §2.2, §3).
 4. When containers are available (OD-21): swap the adapters for NATS, SeaweedFS + lakeFS, PostgreSQL, Marquez, Langfuse, step-ca.
