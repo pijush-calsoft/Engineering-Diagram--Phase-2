@@ -62,7 +62,8 @@ class CompletionRequest(BaseModel):
     role: Role
     instructions: str  # trusted: written in this repository, versioned below
     prompt_version: str
-    inputs: list[str] = []  # untrusted: drawing text, notes, documents, chat
+    inputs: list[str] = []  # untrusted: drawing text, notes, documents, earlier chat turns
+    user: str | None = None  # the engineer's own request (console chat); redacted, not wrapped as data
     images: list[Image] = []
     data_class: DataClass  # where the inputs come from (OD-39)
     run_id: str | None = None
@@ -150,10 +151,15 @@ class Gateway:
                 r = self._redact(text)
                 kinds += r.kinds
                 inputs.append(r.text)
+            user = None
+            if req.user is not None:
+                u = self._redact(req.user)
+                kinds += u.kinds
+                user = u.text
             rec.redactions = dict(kinds)
             injection = sorted({name for text in inputs for name in guard.screen(text)})
             rec.flags = [f"PROMPT_INJECTION_SUSPECTED:{n}" for n in injection]
-            messages = self._messages(instructions.text, inputs, req.images)
+            messages = self._messages(instructions.text, inputs, req.images, user)
             rec.prompt_sha256 = hashlib.sha256(
                 json.dumps(messages, sort_keys=True, default=str).encode()
             ).hexdigest()
@@ -235,7 +241,9 @@ class Gateway:
             self.usage.record(rec)
 
     @staticmethod
-    def _messages(instructions: str, inputs: list[str], images: list[Image]) -> list[dict[str, Any]]:
+    def _messages(
+        instructions: str, inputs: list[str], images: list[Image], user: str | None = None
+    ) -> list[dict[str, Any]]:
         system = instructions if not inputs else f"{instructions}\n\n{guard.DATA_RULE}"
         content: list[dict[str, Any]] = []
         if inputs:
@@ -243,6 +251,8 @@ class Gateway:
         for img in images:
             url = f"data:{img.mime};base64,{base64.b64encode(img.data).decode()}"
             content.append({"type": "image_url", "image_url": {"url": url}})
+        if user is not None:
+            content.append({"type": "text", "text": user})
         messages: list[dict[str, Any]] = [{"role": "system", "content": system}]
         if content:
             messages.append({"role": "user", "content": content})

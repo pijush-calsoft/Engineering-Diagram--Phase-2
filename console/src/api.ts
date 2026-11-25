@@ -1,4 +1,4 @@
-import type { BlockInfo, RunEvent, RunView } from "./types";
+import type { BlockInfo, ChatStatus, CitedAnswer, RunEvent, RunView, Spend } from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -29,6 +29,15 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ decision, reviewer }),
     }).then((r) => json<unknown>(r)),
+  chatStatus: () => fetch("/api/chat").then((r) => json<ChatStatus>(r)),
+  chat: (id: string, question: string, history: { question: string; answer: string }[], signal?: AbortSignal) =>
+    fetch(`/api/runs/${id}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, history }),
+      signal,
+    }).then((r) => json<CitedAnswer>(r)),
+  usage: () => fetch("/api/usage").then((r) => json<Spend>(r)),
 };
 
 const SUBJECTS = ["run.planned", "run.block.started", "run.block.completed", "run.block.failed"];

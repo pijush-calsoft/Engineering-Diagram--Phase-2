@@ -1,9 +1,13 @@
+import json
 import time
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
 from edp_eval.synth import write_set
+from edp_gateway import Gateway, GatewayConfig
+from edp_gateway.backend import Reply
 from edp_orchestrator.server import Console, create_app
 
 
@@ -71,3 +75,51 @@ def test_upload_review_and_errors(client, tmp_path):
     assert c.get("/api/runs/run-nope").status_code == 404
     assert c.get("/api/artifact", params={"uri": "fabric://raw/x/y/z"}).status_code == 400
     assert c.post("/api/runs/sample", params={"name": "../secret.dxf"}).status_code == 404
+
+
+class FakeModel:
+    def __init__(self) -> None:
+        self.messages: list[dict[str, Any]] = []
+
+    def complete(self, model: str, messages: list[dict[str, Any]], **options: Any) -> Reply:
+        self.messages = messages
+        reply = {"answer": "It is in the title block.", "citations": ["TB.material"], "from_facts": True}
+        return Reply(json.dumps(reply), model, 50, 10, 0.0005, "test")
+
+    def embed(self, model: str, texts: list[str], **options: Any) -> Any:
+        raise NotImplementedError
+
+
+def gateway(tmp_path, key: str = "k") -> tuple[Gateway, FakeModel]:
+    fake = FakeModel()
+    cfg = GatewayConfig(
+        api_key=key, provider="openai", models={"text": "m"}, embedding_model=None, budget_usd=None,
+        redact_terms=(), timeout_s=None, max_retries=None, data_dir=tmp_path / "gw",
+    )
+    return Gateway(cfg, backend=fake), fake
+
+
+def test_chat_answers_with_citations_from_the_run(tmp_path):
+    gw, fake = gateway(tmp_path)
+    golden = tmp_path / "golden"
+    write_set(golden, 1, seed=6, uri_prefix="s3://edp-fabric/golden")
+    c = TestClient(create_app(Console(tmp_path / "data", golden, gateway=gw)))
+    assert c.get("/api/chat").json() == {"available": True, "reason": None, "model": "m"}
+    run_id = c.post("/api/runs/sample", params={"name": c.get("/api/samples").json()[0]}).json()["run_id"]
+    wait(c, run_id)
+    ans = c.post(f"/api/runs/{run_id}/chat", json={"question": "What material?", "history": []}).json()
+    assert ans["from_facts"] and ans["citations"][0]["id"] == "TB.material"
+    assert ans["citations"][0]["handles"]  # the citation points back into the drawing
+    assert "[TB.material]" in fake.messages[1]["content"][0]["text"]
+    row = gw.usage.calls()[0]
+    assert row["data_class"] == "synthetic" and row["run_id"] == run_id
+    assert c.get("/api/usage").json() == {"spent_usd": 0.0005, "calls": 1}
+    assert c.post(f"/api/runs/{run_id}/chat", json={"question": " "}).status_code == 400
+    assert c.post("/api/runs/run-nope/chat", json={"question": "q"}).status_code == 404
+
+
+def test_chat_is_unavailable_without_a_key(tmp_path):
+    gw, _ = gateway(tmp_path, key="")
+    c = TestClient(create_app(Console(tmp_path / "data", None, gateway=gw)))
+    status = c.get("/api/chat").json()
+    assert not status["available"] and "OPENAI_API_KEY" in status["reason"]

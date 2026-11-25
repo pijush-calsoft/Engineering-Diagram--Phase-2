@@ -44,7 +44,7 @@ contracts/      edp-contracts: plug-in contract v0.1, artifact schemas, JSON Sch
 platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (Model Gateway, ADR-0009)
 blocks/         b1_parser (DXF, DWG, PDF, STEP, IGES, STL), b2_interpretation (rule-based), b3_knowledge_graph (SQLite adapter) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
 orchestrator/   LangGraph graph, stub blocks 1-8, SQLite checkpointer (Phase 1 skeleton, ADR-0001)
-console/        React + Vite + TS console shell (Phase 1); served by edp_orchestrator.server
+console/        React + Vite + TS console (Phase 1 shell + chat panel, assistant-ui); served by edp_orchestrator.server
 mcp/            MCP server wrappers per block            (not started)
 eval/           edp-eval: golden manifests, metrics, synthetic drawing generator (plan §7, OD-7)
 deploy/         Helm, Argo CD, OpenTofu                  (out of POC scope: no containers, OD-21)

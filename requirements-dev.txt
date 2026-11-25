@@ -40,7 +40,10 @@
     #   edp-b3-knowledge-graph
     #   edp-orchestrator
 -e ./platform/gateway
-    # via edp
+    # via
+    #   edp
+    #   edp-catalogue
+    #   edp-orchestrator
 -e ./platform/kit
     # via
     #   edp

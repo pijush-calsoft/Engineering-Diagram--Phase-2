@@ -733,12 +733,14 @@ version = "0.1.0"
 source = { editable = "platform/catalogue" }
 dependencies = [
     { name = "edp-contracts" },
+    { name = "edp-gateway" },
     { name = "edp-kit" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "edp-contracts", editable = "contracts" },
+    { name = "edp-gateway", editable = "platform/gateway" },
     { name = "edp-kit", editable = "platform/kit" },
 ]
 
@@ -840,6 +842,7 @@ dependencies = [
     { name = "edp-catalogue" },
     { name = "edp-contracts" },
     { name = "edp-fabric" },
+    { name = "edp-gateway" },
     { name = "edp-kit" },
     { name = "langchain-core" },
     { name = "langgraph" },
@@ -852,6 +855,7 @@ requires-dist = [
     { name = "edp-catalogue", editable = "platform/catalogue" },
     { name = "edp-contracts", editable = "contracts" },
     { name = "edp-fabric", editable = "platform/fabric" },
+    { name = "edp-gateway", editable = "platform/gateway" },
     { name = "edp-kit", editable = "platform/kit" },
     { name = "langchain-core", specifier = ">=1.0" },
     { name = "langgraph", specifier = ">=1.0" },

@@ -7,6 +7,7 @@ dependencies = [
     "edp-catalogue",
     "edp-contracts",
     "edp-fabric",
+    "edp-gateway",
     "edp-kit",
     "langchain-core>=1.0",
     "langgraph>=1.0",
@@ -26,3 +27,4 @@ edp-contracts = { workspace = true }
 edp-kit = { workspace = true }
 edp-fabric = { workspace = true }
 edp-catalogue = { workspace = true }
+edp-gateway = { workspace = true }

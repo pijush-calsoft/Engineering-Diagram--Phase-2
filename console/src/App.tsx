@@ -1,10 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, watchRun } from "./api";
+import { Chat } from "./components/Chat";
 import { DrawingSheet } from "./components/DrawingSheet";
 import { Inspector, type Selection } from "./components/Inspector";
 import { Pipeline } from "./components/Pipeline";
 import { sheetBox } from "./geometry";
-import type { BlockInfo, BlockState, DesignGraph, Flag, Geometry, RunEvent, RunView, SimilarParts } from "./types";
+import type {
+  BlockInfo,
+  BlockState,
+  ChatStatus,
+  DesignGraph,
+  Flag,
+  Geometry,
+  RunEvent,
+  RunView,
+  SimilarParts,
+  Spend,
+} from "./types";
 
 const RUN_STATE_TEXT: Record<string, string> = {
   completed: "Completed",
@@ -34,6 +46,9 @@ export function App() {
   const [similar, setSimilar] = useState<SimilarParts | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"read" | "ask">("read");
+  const [chatStatus, setChatStatus] = useState<ChatStatus | null>(null);
+  const [spend, setSpend] = useState<Spend | null>(null);
   const loaded = useRef<Set<string>>(new Set());
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -43,7 +58,17 @@ export function App() {
       setSamples(s);
       setSample(s[0] ?? "");
     });
+    api.chatStatus().then(setChatStatus).catch(() => setChatStatus(null));
+    api.usage().then(setSpend).catch(() => setSpend(null));
   }, []);
+
+  const refreshSpend = useCallback(() => {
+    api.usage().then(setSpend).catch(() => undefined);
+  }, []);
+  const cite = useCallback(
+    (key: string, handles: Set<string>) => setSelection((s) => (s?.key === key ? null : { key, handles })),
+    [],
+  );
 
   const refresh = useCallback(async (id: string) => {
     const v = await api.run(id);
@@ -262,18 +287,40 @@ export function App() {
             )
           }
         />
-        <Inspector
-          geometry={geometry}
-          graph={graph}
-          similar={similar}
-          settled={settled}
-          flags={flags}
-          box={box}
-          view={view}
-          selection={selection}
-          onSelect={setSelection}
-          onReview={review}
-        />
+        <div className="side">
+          <div className="tabs" role="tablist" aria-label="Right panel">
+            <button role="tab" id="tab-read" aria-selected={tab === "read"} aria-controls="panel-read" onClick={() => setTab("read")}>
+              Read from the drawing
+            </button>
+            <button role="tab" id="tab-ask" aria-selected={tab === "ask"} aria-controls="panel-ask" onClick={() => setTab("ask")}>
+              Ask about it
+            </button>
+          </div>
+          <div role="tabpanel" id="panel-read" aria-labelledby="tab-read" hidden={tab !== "read"} className="panel">
+            <Inspector
+              geometry={geometry}
+              graph={graph}
+              similar={similar}
+              settled={settled}
+              flags={flags}
+              box={box}
+              view={view}
+              selection={selection}
+              onSelect={setSelection}
+              onReview={review}
+            />
+          </div>
+          <div role="tabpanel" id="panel-ask" aria-labelledby="tab-ask" hidden={tab !== "ask"} className="panel">
+            <Chat
+              runId={runId}
+              status={chatStatus}
+              spend={spend}
+              selectedKey={selection?.key ?? null}
+              onCite={cite}
+              onAnswered={refreshSpend}
+            />
+          </div>
+        </div>
       </main>
 
       <footer className="log" aria-label="Run events">

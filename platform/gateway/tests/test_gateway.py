@@ -211,3 +211,12 @@ def test_config_reads_env_file_and_hides_key(tmp_path, monkeypatch):
     assert cfg.redact_terms == ("Acme", "Example Corp")
     assert "sk-test-secret" not in repr(cfg) and "Acme" not in repr(cfg)
     assert read_env_file(tmp_path / "missing.env") == {}
+
+
+def test_user_request_is_redacted_and_sent_after_the_data(tmp_path):
+    fake = FakeBackend()
+    gw = Gateway(config(tmp_path), backend=fake)
+    gw.complete(request(inputs=["HOLE 6.5 THRU"], user="What does Acme Industries call this hole?"))
+    parts = fake.calls[0]["messages"][1]["content"]
+    assert parts[0]["text"].startswith('<data id="1">')
+    assert parts[-1] == {"type": "text", "text": "What does [REDACTED:term] call this hole?"}

@@ -108,3 +108,20 @@ export type SimilarParts = {
     evidence: Evidence[];
   }[];
 };
+
+export type ChatStatus = { available: boolean; reason: string | null; model: string | null };
+
+export type Citation = { id: string; text: string; handles: string[] };
+
+export type CitedAnswer = {
+  answer: string;
+  from_facts: boolean;
+  citations: Citation[];
+  flags: Flag[];
+  cost_usd: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  facts: number;
+};
+
+export type Spend = { spent_usd: number; calls: number };

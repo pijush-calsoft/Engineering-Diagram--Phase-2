@@ -27,10 +27,11 @@ For UI development, run `npm run dev` in `console/` (Vite proxies `/api` to port
 | Title block | Part number, revision, material, scale, units, tolerances read from the drawing, plus run, file version and status | |
 | Inspector | Features and parameters from the design graph, with how each value was found and its sheet zone; flags; approve or reject when a run waits for review | plan Phase 3, principle 3, Phase 1 "interrupt points for human review" |
 | Run events | The run's event log | plan Appendix B |
+| Ask about it (chat) | Tab beside "Read from the drawing". Questions about the open run are answered from numbered facts the platform read (title block, dimensions, notes, features, 3D solids, similar parts, flags); every answer lists the facts it used, and clicking one highlights its source on the drawing. Answers the facts do not support say so. Each answer shows tokens and cost; the panel shows total model spend. Built on assistant-ui (`useLocalRuntime` with an adapter that calls `POST /api/runs/{id}/chat`) | plan Phase 1 "Chat panel", §4.3 assistant-ui; Catalogue "cited answer" endpoint |
 
 Links: `?run=<id>` opens a run; `&select=<id>` (for example `hole1.diameter`) opens it with that value traced.
 
-Not built yet: the chat panel (needs the Model Gateway, OD-43), 3D viewer, script editor, margins and envelope views, report studio (Phases 4 to 6), Playwright tests (plan §4.3).
+Not built yet: run planning from chat (plan Phase 6 "Chat with run plans"), 3D viewer, script editor, margins and envelope views, report studio (Phases 4 to 6), Playwright tests (plan §4.3).
 
 ## Design
 

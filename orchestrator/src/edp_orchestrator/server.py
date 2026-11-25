@@ -4,6 +4,10 @@ One process serves the console and fronts the Data Fabric, Data Catalogue and
 orchestrator, using the local adapters (ADR-0008). Blocks registered through the
 ``edp.blocks`` entry point replace the stubs; the rest stay stubs.
 
+The chat panel asks the Data Catalogue for cited answers about a run, through the Model
+Gateway (ADR-0009). Sample drawings are synthetic data; uploads are treated as client data
+(OD-39): their text is redacted like any other, and their images would be refused.
+
 Usage: ``uv run python -m edp_orchestrator.server --data-dir var [--port 8765] [--golden DIR ...]``
 """
 
@@ -23,9 +27,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from edp_catalogue import Catalogue
+from edp_catalogue.answer import CitedAnswer, Turn, cited_answer, facts_from_run
 from edp_contracts import Block
 from edp_contracts.registry import discover_blocks
 from edp_fabric import FabricStore, IngestResult, UnsupportedTypeError
+from edp_gateway import DataClass, Gateway, GatewayConfig, GatewayError
 from edp_kit import InMemoryEventBus
 from edp_orchestrator.graph import Orchestrator, RunStatus
 from edp_orchestrator.stubs import stub_blocks
@@ -51,6 +57,22 @@ class BlockInfo(BaseModel):
     real: bool
 
 
+class ChatStatus(BaseModel):
+    available: bool
+    reason: str | None = None
+    model: str | None = None
+
+
+class ChatQuestion(BaseModel):
+    question: str
+    history: list[Turn] = []
+
+
+class Spend(BaseModel):
+    spent_usd: float
+    calls: int
+
+
 class RunView(BaseModel):
     status: RunStatus
     running: bool
@@ -59,7 +81,9 @@ class RunView(BaseModel):
 
 
 class Console:
-    def __init__(self, data_dir: Path, golden: Path | list[Path] | None = None) -> None:
+    def __init__(
+        self, data_dir: Path, golden: Path | list[Path] | None = None, gateway: Gateway | None = None
+    ) -> None:
         data_dir.mkdir(parents=True, exist_ok=True)
         os.environ["EDP_DATA_DIR"] = str(data_dir)  # entry-point blocks share this Fabric
         self.bus = InMemoryEventBus()
@@ -75,11 +99,50 @@ class Console:
         self.lock = threading.Lock()
         self.running: set[str] = set()
         self.uploads: dict[str, IngestResult] = {}
+        self.data_class: dict[str, DataClass] = {}
+        self._gateway = gateway
 
-    def start(self, filename: str, data: bytes) -> StartedRun:
+    def gateway(self) -> Gateway:
+        """The Model Gateway, created on first use from ``.env`` (it needs ``OPENAI_API_KEY``)."""
+        if self._gateway is None:
+            self._gateway = Gateway(GatewayConfig.load())
+        return self._gateway
+
+    def chat_status(self) -> ChatStatus:
+        try:
+            cfg = self.gateway().config
+        except Exception as exc:  # noqa: BLE001 - any configuration problem disables chat
+            return ChatStatus(available=False, reason=f"Model Gateway not configured: {type(exc).__name__}")
+        if not cfg.api_key:
+            return ChatStatus(available=False, reason="Set OPENAI_API_KEY in .env to ask questions")
+        if "text" not in cfg.models:
+            return ChatStatus(available=False, reason="Set EDP_LLM_MODEL_TEXT in .env to ask questions")
+        return ChatStatus(available=True, model=cfg.models["text"])
+
+    def artifact_json(self, run_id: str, kind: str) -> dict | None:
+        for r in self.catalogue.by_run(run_id):
+            if r.artifact.kind == kind and r.artifact.uri.startswith("fabric://"):
+                return json.loads(self.fabric.read(r.artifact.uri))
+        return None
+
+    def ask(self, run_id: str, q: ChatQuestion) -> CitedAnswer:
+        status = self.orchestrator.status(run_id)
+        flags = [f for r in status.results for f in r.get("flags", [])]
+        facts = facts_from_run(
+            self.artifact_json(run_id, "geometry"),
+            self.artifact_json(run_id, "design_graph"),
+            self.artifact_json(run_id, "similar_parts"),
+            flags,
+        )
+        return cited_answer(
+            self.gateway(), q.question, facts, self.data_class.get(run_id, "client"), run_id, q.history
+        )
+
+    def start(self, filename: str, data: bytes, data_class: DataClass = "client") -> StartedRun:
         upload = self.fabric.ingest(filename, data, uploader="console")
         run_id = f"run-{uuid.uuid4().hex[:8]}"
         self.uploads[run_id] = upload
+        self.data_class[run_id] = data_class
         self.running.add(run_id)
         threading.Thread(
             target=self._work,
@@ -160,7 +223,7 @@ def create_app(console: Console) -> FastAPI:
         path = sample_files().get(name)
         if path is None:
             raise HTTPException(status_code=404, detail=f"no sample drawing named {name!r}")
-        return console.start(path.name, path.read_bytes())
+        return console.start(path.name, path.read_bytes(), data_class="synthetic")
 
     @app.post("/api/runs", response_model=StartedRun)
     async def run_upload(file: UploadFile) -> StartedRun:
@@ -186,6 +249,33 @@ def create_app(console: Console) -> FastAPI:
             raise HTTPException(status_code=409, detail=f"run {run_id} is not waiting for review")
         console.review(run_id, decision)
         return {"run_id": run_id, "decision": decision.decision}
+
+    @app.get("/api/chat", response_model=ChatStatus)
+    def chat_status() -> ChatStatus:
+        return console.chat_status()
+
+    @app.post("/api/runs/{run_id}/chat", response_model=CitedAnswer)
+    def chat(run_id: str, q: ChatQuestion) -> CitedAnswer:
+        if not q.question.strip():
+            raise HTTPException(status_code=400, detail="Ask a question first")
+        if console.orchestrator.status(run_id).state == "unknown":
+            raise HTTPException(status_code=404, detail=f"unknown run {run_id}")
+        if not console.chat_status().available:
+            raise HTTPException(status_code=503, detail=console.chat_status().reason)
+        try:
+            return console.ask(run_id, q)
+        except GatewayError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001 - provider errors: report the type, never the request
+            detail = f"The model call failed ({type(exc).__name__})"
+            raise HTTPException(status_code=502, detail=detail) from exc
+
+    @app.get("/api/usage", response_model=Spend)
+    def usage() -> Spend:
+        if not console.chat_status().available:
+            return Spend(spent_usd=0.0, calls=0)
+        log = console.gateway().usage
+        return Spend(spent_usd=log.spent_usd(), calls=len(log.calls()))
 
     @app.get("/api/artifact")
     def artifact(uri: str) -> dict:

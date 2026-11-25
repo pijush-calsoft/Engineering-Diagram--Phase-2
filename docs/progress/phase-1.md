@@ -59,7 +59,7 @@ report traces back to: <file hash>@<commit>
 ## 6. Next in Phase 1
 
 1. **Model Gateway: built 2026-11-25** (§7). Still open: nightly benchmark job (DeepEval), Presidio and NeMo Guardrails (OD-51), image masking for client drawings (OD-51).
-2. **Console shell: built 2026-11-25** ([console/README.md](../../console/README.md)). Pipeline map with live block status over SSE, drawing sheet with source tracing, inspector, review actions, run events; local console API `edp_orchestrator.server`. The chat panel waits for the Model Gateway (OD-43).
+2. **Console shell: built 2026-11-25** ([console/README.md](../../console/README.md)). Pipeline map with live block status over SSE, drawing sheet with source tracing, inspector, review actions, run events; local console API `edp_orchestrator.server`. **Chat panel built 2026-11-25** (§8).
 3. **MCP wrappers** per block (plan §2.2, §3).
 4. When containers are available (OD-21): swap the adapters for NATS, SeaweedFS + lakeFS, PostgreSQL, Marquez, Langfuse, step-ca.
 
@@ -82,4 +82,27 @@ uv run python -m edp_gateway check (live, synthetic text only):
   code/judge/text/vision gpt-5.5: ok, reply 'ready', 54+12 tokens, 0.00063 USD each (54 x 5e-06 + 12 x 3e-05)
   embed text-embedding-3-large: ok, 3072 dimensions, 5 tokens, 6.5e-07 USD
 uv run python -m edp_gateway usage: 5 calls logged, 0.00252 USD; the usage database holds no prompt text
+```
+
+## 8. Console chat panel and cited answers (2026-11-25)
+
+Plan Phase 1 console shell: "Chat panel ... React, assistant-ui"; Data Catalogue: "cited answer" endpoint.
+
+| Item | Detail |
+|---|---|
+| Cited answers | `platform/catalogue/src/edp_catalogue/answer.py`: run artifacts become numbered facts (`UNITS`, `TB.*`, `D1..`, `T1..` up to 80 texts, `S1`, `S1.H1`, design-graph node ids, `SP1..`, `KG.*`, `FL1..`), each with its source handles. Prompt `cited-answer-1`: answer only from the facts, cite their ids, say when the facts do not answer. Unknown ids are dropped and flagged; an uncited "supported" answer is flagged |
+| Gateway | New `user` field: the engineer's question goes as the request, the facts and earlier turns as `<data>`; all redacted |
+| Console API | `GET /api/chat` (available, model or reason), `POST /api/runs/{id}/chat`, `GET /api/usage`. Samples are `synthetic` data; uploads are `client` data (OD-39) |
+| UI | "Ask about it" tab beside "Read from the drawing": assistant-ui 0.15.38 (MIT) thread and composer, three suggested questions, answers with clickable citations that highlight the drawing, a note when the facts do not support an answer, tokens and cost per answer, total spend |
+| npm | assistant-ui brings 91 packages (100 to 191); the npm licence gate passes (ISC, 0BSD and OFL-1.1 still pending OD-31). The bundle is now over 500 kB; code splitting is a later improvement |
+
+Verification:
+
+```text
+uv run pytest platform/catalogue/tests orchestrator/tests/test_console_api.py: catalogue 8 passed (4 new), console API 5 passed (2 new)
+bash scripts/ci/run_ci.sh: exit 0; mypy 71 files; 252 passed; licence gates pass (Python 106 pass + 7 exceptions; npm 191)
+Live, syn-iso-plate-000: "List the holes with their diameters." -> four holes, 5.5 mm, citing hole1..hole4.diameter
+  (labels: four holes, diameter 5.5); 1182 + 67 tokens, 0.0079 USD
+Live, same run: "What surface finish is required?" -> from_facts false, no citations: "The provided facts do not state any required surface finish."
+Headless Edge (CDP script) at 1440x900 and 390x844: suggestion clicked, answer rendered, first citation highlights the hole on the sheet; phone page width 390 (no sideways scroll)
 ```
