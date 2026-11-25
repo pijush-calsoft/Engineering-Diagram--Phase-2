@@ -4,6 +4,7 @@
 |---|---|---|
 | [progress/PROGRESS.md](progress/PROGRESS.md) | Phase tracker (0 to 8), Phase 0 checklist, session log | End of every work session |
 | [progress/phase-0.md](progress/phase-0.md) | What was built in Phase 0, how it was verified, what is pending | During Phase 0 |
+| [progress/phase-1.md](progress/phase-1.md) | Phase 1: walking skeleton, local adapters, exit-criteria status | During Phase 1 |
 | [open-decisions.md](open-decisions.md) | Decisions waiting on an owner (OD-1 onward) | A question appears or is decided |
 | [reference/plan-vs-deck.md](reference/plan-vs-deck.md) | Where the plan and the deck disagree (D, I, L ids) | Either source changes |
 | [reference/deck-text.md](reference/deck-text.md) | Searchable text of the 98-slide deck | Deck changes |

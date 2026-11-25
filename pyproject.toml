@@ -3,7 +3,7 @@ name = "edp"
 version = "0.0.0"
 description = "AI-Powered Engineering Diagram Platform (monorepo root)"
 requires-python = ">=3.11"
-dependencies = ["edp-contracts", "edp-eval", "edp-ci"]
+dependencies = ["edp-contracts", "edp-eval", "edp-ci", "edp-kit", "edp-fabric", "edp-catalogue", "edp-orchestrator"]
 
 [dependency-groups]
 dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.10"]
@@ -12,16 +12,20 @@ dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.10"]
 package = false
 
 [tool.uv.workspace]
-members = ["contracts", "eval", "scripts/ci"]
+members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "orchestrator"]
 
 [tool.uv.sources]
 edp-contracts = { workspace = true }
 edp-eval = { workspace = true }
 edp-ci = { workspace = true }
+edp-kit = { workspace = true }
+edp-fabric = { workspace = true }
+edp-catalogue = { workspace = true }
+edp-orchestrator = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests"]
-addopts = "-q --import-mode=importlib"
+testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "orchestrator/tests"]
+addopts = "-q"
 
 [tool.ruff]
 line-length = 110
@@ -31,7 +35,7 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["edp_contracts", "edp_eval", "edp_ci"]
+known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_orchestrator"]
 
 [tool.mypy]
 python_version = "3.11"

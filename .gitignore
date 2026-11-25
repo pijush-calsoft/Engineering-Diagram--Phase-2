@@ -12,6 +12,7 @@ node_modules/
 # Drawings, models and solver outputs: data lives in the Data Fabric (plan Appendix A). Repo rule: never in git.
 # Scans (PNG/TIFF/JPEG) and PDFs are not excluded by extension; keep golden data only under eval/golden/data/.
 eval/golden/data/
+var/
 *.dwg
 *.dxf
 *.step

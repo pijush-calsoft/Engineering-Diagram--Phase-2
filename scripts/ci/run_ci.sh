@@ -12,7 +12,7 @@ step "Lint (ruff)"
 uv run ruff check .
 
 step "Type check (mypy)"
-uv run mypy contracts/src eval/src scripts/ci/src
+uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src orchestrator/src
 
 step "Tests (pytest)"
 uv run pytest

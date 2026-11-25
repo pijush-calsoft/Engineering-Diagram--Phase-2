@@ -36,7 +36,7 @@ Status values: **Open**, **Decided**, **Superseded**.
 | ID | Question | Status | Notes |
 |---|---|---|---|
 | OD-18 | CI provider and git hosting | Decided 2026-11-24 (project owner), in part | Git repository created (branch `main`, repo-local identity, initial commit). `requirements.txt` and `requirements-dev.txt` are generated from `uv.lock` and checked in CI. **CI provider and remote hosting still open.** CI steps are in `scripts/ci/run_ci.sh`, which any provider can call |
-| OD-19 | Topic for ADR-008 (ADR-006 records OD-4, ADR-007 records OD-38) | Open | The plan asks for ADRs 001 to 008 but names five topics |
+| OD-19 | Topics for ADR-006 to ADR-008 | Decided 2026-11-25 | Used for OD-4 (ADR-0006), OD-38 (ADR-0007) and the local-first adapters (ADR-0008) |
 | OD-20 | Hardware sizing inputs: GPU for the VLM and code model, CPU cores for meshing and solvers | Decided 2026-11-24 (project owner) via OD-5 and OD-38, in part | **No GPU needed**: all LLM and vision work is through the OpenAI API. CPU cores and memory for meshing and solvers on the local machine are still to size in Phase 5 |
 | OD-21 | Container runtime on the development machine | Decided 2026-11-24 (project owner) | **Rancher Desktop** (Apache-2.0), with dockerd (moby) for the `docker` CLI. Docker Desktop was not chosen because it is proprietary (Docker Subscription Service Agreement). Install needs admin rights and WSL 2: steps in [setup/local-environment.md](setup/local-environment.md). **Not installed yet** |
 
@@ -78,6 +78,7 @@ These are listed with the owner role the deck gives. They overlap with the items
 | OD-41 | Which ISO and ASME conventions the synthetic drawings follow in detail (projection method, dimension style, units, general tolerance note) | Open | The generator implements both as configurable profiles; see [eval/README.md](../eval/README.md) |
 | OD-42 | Knowledge Graph embeddings (plan Phase 3: bge-m3 / nomic-embed, local): through the OpenAI API or local? | Open | Not covered by the OD-38 answer. "No local LLM" (OD-5) does not clearly cover embedding models |
 | OD-43 | Which OpenAI models for text, vision, code generation and LLM-as-judge? | Open | `.env` slots `EDP_LLM_MODEL_TEXT`, `_VISION`, `_CODE`, `_JUDGE` are blank. The nightly gateway benchmark (plan Phase 1, §7 Gateway row) can inform the choice |
+| OD-44 | Virus scanner for uploads (plan Phase 1: "virus and type check") | Open | Type check from content is built in `edp_fabric`; no scanner chosen. Plan and deck name none |
 
 ## Detail items tracked in their own documents
 
