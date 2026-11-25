@@ -109,6 +109,37 @@ class FabricStore:
     def read(self, uri: str) -> bytes:
         return self.resolve(uri).read_bytes()
 
+    def write(self, run_id: str, block: str, name: str, data: bytes) -> str:
+        """Store a block output in the cleaned zone and return its URI.
+
+        Deck slide 30: "The Drawing Parser works here, from raw to cleaned". Each
+        write is a new commit on the run's dataset; earlier outputs stay readable.
+        """
+        dataset_id = f"run-{_SAFE_NAME.sub('_', run_id)}"
+        filename = _SAFE_NAME.sub("_", f"{block}.{name}")
+        try:
+            parent: Commit | None = self.latest("cleaned", dataset_id)
+        except KeyError:
+            parent = None
+        files = (
+            {}
+            if parent is None
+            else {
+                n: (self._commit_dir("cleaned", dataset_id, parent.commit) / n).read_bytes()
+                for n in parent.files
+            }
+        )
+        files[filename] = data
+        commit = self._write_commit(
+            "cleaned",
+            dataset_id,
+            files,
+            parent=parent.commit if parent else None,
+            message=f"{block} output {filename}",
+        )
+        self._publish(FABRIC_DATASET_VERSIONED, {"dataset_id": dataset_id, "commit": commit.commit})
+        return self.uri("cleaned", dataset_id, commit.commit, filename)
+
     def resolve(self, uri: str) -> Path:
         if not uri.startswith(SCHEME):
             raise ValueError(f"not a fabric URI: {uri}")

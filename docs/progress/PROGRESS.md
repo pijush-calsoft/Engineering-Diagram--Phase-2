@@ -2,7 +2,7 @@
 
 Read this first in every session. Update it at the end of every session (see [CLAUDE.md](../../CLAUDE.md)).
 
-**Current phases: Phase 1 in progress (walking skeleton runs locally); Phase 0 sign-off pending.** On 2026-11-24 the project owner answered OD-1 to OD-9. Two of the three exit criteria are now met locally; the remaining one needs the director's sign-off.
+**Current phases: Phase 2 in progress (DXF parser built); Phase 1 gateway/console pending owner inputs; Phase 0 sign-off pending.** On 2026-11-24 the project owner answered OD-1 to OD-9. Two of the three exit criteria are now met locally; the remaining one needs the director's sign-off.
 
 ## Phases (plan §5)
 
@@ -10,7 +10,7 @@ Read this first in every session. Update it at the end of every session (see [CL
 |---|---|---|---|---|---|
 | 0 | Discovery, golden data and foundations | R1 | 4 weeks | **In progress**: golden DXF set done; sign-off pending | [phase-0.md](phase-0.md) |
 | 1 | Platform services and orchestrator skeleton | R1 | 4 weeks | **In progress**: walking skeleton built with local adapters (ADR-0008). Gateway and console not started | [phase-1.md](phase-1.md) |
-| 2 | Drawing Parser | R1 | 5 weeks | Not started | |
+| 2 | Drawing Parser | R1 | 5 weeks | **In progress**: DXF path built and evaluated on the golden set; other inputs and tasks 2, 5, 6 pending | [phase-2.md](phase-2.md) |
 | 3 | Interpretation and Knowledge Graph | R1 | 4 weeks | Not started | |
 | 4 | Generation and OpenCAD Adapters | R1 | 5 weeks | Not started | |
 | 5 | Solver Connectors and Surrogate | R1 | 6 weeks | Not started | |
@@ -43,7 +43,8 @@ The plan's phases are the baseline (OD-8, decided: "take time to complete all").
 
 ## What the next session should do
 
-0. Phase 1 next: Model Gateway client (OpenAI through LiteLLM; needs `OPENAI_API_KEY` and OD-43 models), console shell (React, chat panel, pipeline map from `run.*` events), MCP wrappers.
+0. Phase 2 next: dimension association, harder golden data, vector PDF, DWG, STEP/STL, SVG rendering ([phase-2.md](phase-2.md)).
+0. Phase 1 still open: Model Gateway client (OpenAI through LiteLLM; needs `OPENAI_API_KEY` and OD-43 models), console shell (React, chat panel, pipeline map from `run.*` events), MCP wrappers.
 1. Confirm OD-12 (part families) and the three recorded interpretations (OD-1, OD-6, OD-9).
 2. Owner actions: install WSL 2 and Rancher Desktop as administrator ([setup guide](../setup/local-environment.md)); put `OPENAI_API_KEY` in `.env`. Decisions: confirm NATS (OD-10), pick OpenAI models (OD-43), embeddings via API or local (OD-42), client data to OpenAI (OD-39), CI provider (OD-18).
 3. Golden set next steps: render vector-PDF and scan variants from the synthetic DXF; sign off and ingest NIST MBE PMI and FreeCAD-library models for the 20 STEP/STL.
@@ -57,3 +58,4 @@ The plan's phases are the baseline (OD-8, decided: "take time to complete all").
 | 2026-11-24 | Recorded owner answers OD-1 to OD-9 (ADR-0001 and 0005 accepted, ADR-0006 written for OD-4). Added `.env.example`/`.env`, the Ansys import connector folder, the synthetic golden-set generator and 80 drawings, and public-source research. Fixed a dimension-text bug found by visual review | `bash scripts/ci/run_ci.sh` exit 0: ruff clean, mypy clean (22 source files), 155 tests passed, licence gate 22 pass + 1 recorded exception (numpy, OD-31). Two drawings checked visually |
 | 2026-11-24 | Recorded OD-37 (OpenAI), OD-38 (multimodal API, ADR-0007), OD-10/18/21 (owner installs and creates). Generated `requirements.txt` and `requirements-dev.txt` from `uv.lock`, added a CI sync check, set `.env` for OpenAI | `run_ci.sh` exit 0: ruff, mypy (22 files), 155 tests, requirements in sync, licence gate passed. Fresh pip-only venv from `requirements-dev.txt`: 155 passed. Drift check shown to fail on an altered file |
 | 2026-11-25 | Phase 1 walking skeleton: edp-kit, Data Fabric, Data Catalogue, orchestrator with stub blocks 1-8, local CLI. ADR-0008. Fixed pytest import mode (stdlib `platform` clash) | `run_ci.sh` exit 0: ruff, mypy (35 files), 183 tests, requirements in sync, licence gate 61 pass + 2 recorded exceptions. CLI run on a synthetic DXF: 8/8 blocks ok, report traced to file hash and commit |
+| 2026-11-25 | Committed Phase 1 (`d6164da`). Phase 2 started: DXF Drawing Parser block (entry point), Fabric `write()`, parser evaluation suite, `--real-blocks` CLI. Fixed CRLF parsing and rounding tolerance | `run_ci.sh` exit 0: ruff, mypy (42 files), 197 tests, requirements in sync, licence gate passed. Golden suite on 80 drawings: all four Phase 2 metrics at target. The set is easy for this parser (see phase-2.md) |

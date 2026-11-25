@@ -10,6 +10,7 @@ Evaluation is a cross-cutting track that starts in Phase 0 and never stops (plan
 | `suites/` | Per-block and end-to-end evaluation | plan Appendix A |
 | `src/edp_eval/golden.py` | Manifest model (`GoldenItem`, `GoldenManifest`) and the Phase 0 golden-set check | plan Phase 0 task 2 and exit criteria, principle 7 |
 | `src/edp_eval/metrics.py` | Parser metrics and `PHASE2_TARGETS` | plan Phase 2 exit criteria, plan §7 Parser row |
+| `src/edp_eval/suites/parser_dxf.py` | Drawing Parser suite on the DXF golden set: the four Phase 2 metrics, per profile and family | plan §7 Parser row, Phase 2 exit criteria |
 | `src/edp_eval/synth/` | Synthetic DXF drawings with exact labels, ISO and ASME profiles | OD-7, OD-1 (owner answers 2026-11-24) |
 | `tests/` | Unit tests with hand-computed values | plan §4.3 Testing (pytest) |
 
