@@ -42,7 +42,9 @@
 -e ./platform/gateway
     # via
     #   edp
+    #   edp-b1-parser
     #   edp-catalogue
+    #   edp-eval
     #   edp-orchestrator
 -e ./platform/kit
     # via
@@ -257,15 +259,21 @@ numpy==2.4.6 ; python_full_version < '3.12'
     #   contourpy
     #   ezdxf
     #   matplotlib
+    #   opencv-python-headless
     #   trimesh
 numpy==2.5.5 ; python_full_version >= '3.12'
     # via
     #   contourpy
     #   ezdxf
     #   matplotlib
+    #   opencv-python-headless
     #   trimesh
 openai==3.59.0
     # via litellm
+opencv-python-headless==5.1.0.95
+    # via
+    #   edp-b1-parser
+    #   edp-eval
 opentelemetry-api==1.45.2
     # via fastapi
 orjson==3.13.0
@@ -324,7 +332,9 @@ pyparsing==3.3.3
     #   ezdxf
     #   matplotlib
 pypdfium2==5.15.2
-    # via edp-b1-parser
+    # via
+    #   edp-b1-parser
+    #   edp-eval
 pytest==9.2.0
 python-dateutil==2.9.0.post0
     # via

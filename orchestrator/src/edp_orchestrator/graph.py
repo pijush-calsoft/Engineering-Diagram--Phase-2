@@ -39,6 +39,7 @@ class RunState(TypedDict, total=False):
     results: Annotated[list[dict[str, Any]], operator.add]  # {"block", "status", "flags", "metrics"}
     pending_next: str | None
     decision: dict[str, str] | None
+    params: dict[str, Any]  # passed to every block, e.g. {"data_class": "synthetic"} (OD-39)
 
 
 class RunStatus(BaseModel):
@@ -61,7 +62,9 @@ class Orchestrator:
 
     # --- public API -------------------------------------------------------------------
 
-    def start(self, run_id: str, inputs: Sequence[Artifact]) -> RunStatus:
+    def start(
+        self, run_id: str, inputs: Sequence[Artifact], params: dict[str, Any] | None = None
+    ) -> RunStatus:
         if self.app.get_state(self._config(run_id)).values:
             raise ValueError(f"run {run_id!r} already exists; use resume()")
         initial: RunState = {
@@ -72,6 +75,7 @@ class Orchestrator:
             "results": [],
             "pending_next": None,
             "decision": None,
+            "params": dict(params or {}),
         }
         return self._invoke(run_id, initial)
 
@@ -145,7 +149,8 @@ class Orchestrator:
             inputs = _select_inputs(state.get("artifacts", []), block.accepts)
             if not inputs:
                 raise ValueError(f"no input of kinds {sorted(block.accepts)} for {block.name}")
-            result = run_block(block, BlockRequest(run_id=run_id, inputs=inputs), self.bus)
+            req = BlockRequest(run_id=run_id, inputs=inputs, params=state.get("params") or {})
+            result = run_block(block, req, self.bus)
             if result.status == "failed":
                 raise RuntimeError(f"block {block.name} failed: {[f.message for f in result.flags]}")
             produced = [

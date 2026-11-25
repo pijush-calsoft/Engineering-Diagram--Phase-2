@@ -13,6 +13,7 @@ Evaluation is a cross-cutting track that starts in Phase 0 and never stops (plan
 | `src/edp_eval/suites/parser_dxf.py` | Drawing Parser suite on the DXF golden set: the four Phase 2 metrics, per profile and family | plan §7 Parser row, Phase 2 exit criteria |
 | `src/edp_eval/suites/interpretation.py` | Interpretation suite: feature recall and precision, dimension association | plan §7 Interpretation row, Phase 3 exit criteria |
 | `src/edp_eval/suites/knowledge_graph.py` | Knowledge Graph suite on the family set: similar-part recall@3, corroboration outcomes | plan §7, Phase 3 exit criteria |
+| `src/edp_eval/suites/parser_scan.py` | Scan suite: the four Phase 2 metrics on synthetic scans, read live through the Model Gateway (`--limit` caps cost) | plan §7 Parser row, Phase 2 exit criteria (scans column) |
 | `src/edp_eval/suites/models.py` | 3D suite: STEP holes, bounding box and volume; STL watertightness and opening hint. Reports only | plan Phase 2; no 3D targets in the plan (TBD-AC-1) |
 | `src/edp_eval/synth/` | Synthetic DXF drawings with exact labels, ISO and ASME profiles | OD-7, OD-1 (owner answers 2026-11-24) |
 | `tests/` | Unit tests with hand-computed values | plan §4.3 Testing (pytest) |

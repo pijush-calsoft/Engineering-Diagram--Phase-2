@@ -39,6 +39,7 @@ from edp_orchestrator.stubs import stub_blocks
 CONSOLE_DIST = Path(__file__).resolve().parents[3] / "console" / "dist"
 POLL_SECONDS = 0.2
 SAMPLE_SUFFIXES = {".dxf", ".dwg", ".pdf", ".step", ".stp", ".igs", ".iges", ".stl"}
+SAMPLE_SUFFIXES |= {".png", ".jpg", ".jpeg", ".tif", ".tiff"}  # scans (ADR-0007)
 
 
 class StartedRun(BaseModel):
@@ -146,7 +147,10 @@ class Console:
         self.running.add(run_id)
         threading.Thread(
             target=self._work,
-            args=(run_id, lambda: self.orchestrator.start(run_id, [upload.as_artifact()])),
+            args=(
+                run_id,
+                lambda: self.orchestrator.start(run_id, [upload.as_artifact()], {"data_class": data_class}),
+            ),
             daemon=True,
         ).start()
         return StartedRun(run_id=run_id, upload=upload)

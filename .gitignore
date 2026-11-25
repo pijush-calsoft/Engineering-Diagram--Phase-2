@@ -25,3 +25,7 @@ var/
 *.iges
 *.frd
 !eval/golden/fixtures/**
+# Source plan and deck: internal reference documents, kept locally and never published (owner decision 2026-11-25)
+/engineering-diagram-platform-plan.md
+/AI_Engineering_Diagram_Platform_*.pptx
+/docs/reference/deck-text.md

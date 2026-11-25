@@ -136,3 +136,16 @@ def test_run_ids_are_unique(tmp_path):
     orch.start("run-5", [art])
     with pytest.raises(ValueError):
         orch.start("run-5", [art])
+
+
+class Recorder(StubBlock):
+    def run(self, req: BlockRequest) -> BlockResult:
+        self.calls.append(req.params.get("data_class", "unset"))
+        return super().run(req)
+
+
+def test_run_params_reach_every_block(tmp_path):
+    env = Env(tmp_path)
+    blocks = [Recorder(name=b.name, accepts=b.accepts, produces=b.produces) for b in stub_blocks()]
+    env.orchestrator(blocks).start("run-p", [env.upload().as_artifact()], {"data_class": "synthetic"})
+    assert all(b.calls == ["synthetic", "run-p"] for b in blocks)

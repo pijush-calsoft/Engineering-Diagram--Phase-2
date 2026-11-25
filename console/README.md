@@ -12,7 +12,7 @@ npm run build
 
 # 2. Start the console API, which also serves the built UI
 cd ..
-uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/golden/data/synthetic
+uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/golden/data/synthetic eval/golden/data/synthetic-scan
 # open http://127.0.0.1:8765
 ```
 

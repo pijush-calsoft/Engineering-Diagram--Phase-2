@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Plan reference | plan §6 Phase 2 (5 weeks, R1) |
-| Status | Mostly done. DXF, DWG, vector PDF, STEP, IGES and STL built and evaluated on synthetic sets; scans wait for OD-43; calibration needs real drawings |
+| Status | Mostly done. Every R1 input is built and evaluated on synthetic sets; scans miss the dimension F1 target (0.80 vs 0.85); calibration needs real drawings |
 | Last updated | 2026-11-25 |
 
 ## 1. Order of work
@@ -119,4 +119,39 @@ The parser now prefers 0.14 (`edp_b1_parser.dwg`), with 0.11 as fallback. All of
 | 4 Symbol detector fine-tune | Dropped (OD-5, OD-38, ADR-0007) |
 | 5 Calibration | Measured on synthetic sets only; needs real drawings (OD-7) |
 | 6 Rendering for the console | Done: the console redraws the geometry artifact as SVG |
-| Scans | Waiting for the multimodal path (OD-43; key pending) |
+| Scans | Built 2026-11-25 (§9); title block, locators and ECE meet the scan targets on 20 synthetic scans, dimension F1 does not (0.80 vs 0.85) |
+
+## 9. Scans (2026-11-25, ADR-0007)
+
+Plan Phase 2 "Scans": "OpenCV deskew and denoise, line and circle detection, PaddleOCR or docTR for text, RT-DETR or D-FINE ... VLM for title block and notes". ADR-0007 replaces the OCR and detector models with a multimodal model over the API.
+
+### Built
+
+| Item | Detail |
+|---|---|
+| `edp_b1_parser.scan` | Pages: image files, or the largest image on each PDF page at its own resolution. Clean-up: 3-pixel median filter; deskew by the median angle of long lines within 10 degrees of level (OD-52). One gpt-5.5 vision call per page (prompt `scan-read-1`) returns title block, dimensions and notes, each with a box and a confidence. Code checks: box inside the page with an area, value is a number in the text; failures flagged `LOW_CONFIDENCE` or `DIM_TEXT_MISMATCH`. Boxes mapped back through the deskew; locators in image pixels, y up |
+| Block 1 | Accepts `image`; PDFs flagged `SCANNED_PDF` go to the scan path. The run's `data_class` (new orchestrator run parameter) decides: client scans are refused by the gateway (`SCAN_NOT_READ`, blocking) until title-block masking exists (OD-51) |
+| Orchestrator | `start(run_id, inputs, params)`; params reach every block. Console samples are `synthetic`, uploads `client` |
+| Golden data | `synthetic-scan`: the 80 vector PDFs rendered at 150 DPI, rotated up to 2 degrees, blurred, with grain noise; `.scanmap.json` gives each truth dimension's text position in image pixels (checked by overlaying it on a scan) |
+| Suite | `edp_eval.suites.parser_scan`, `--limit K` spreads K drawings over the set (each costs a model call) |
+| Licence | opencv-python-headless 5.1 (Apache 2.0); it bundles FFmpeg and codecs under LGPL 2.1 as unmodified libraries (LGPL rule, plan §9); no GPL part |
+
+### Results (20 of 80 synthetic scans, live)
+
+| Metric (plan Phase 2, scans column) | 20 synthetic scans | Target | Met |
+|---|---|---|---|
+| Dimension value and target F1 | 0.80 | >= 0.85 | No |
+| Title block field accuracy | 0.96 | >= 0.92 | Yes |
+| Entities with a valid locator | 1.00 | 100 % | Yes |
+| Calibration error (ECE) | 0.078 | <= 0.08 | Yes, barely |
+
+Every scan returned as many dimensions as it has, so the misses are wrong values or far boxes, not missed reads. Re-reading the two worst scans showed both: digits misread in 15-pixel text (9 read as 8, 55 as 65, 3 as 4, 4.5 as 4, 6.6 as 8) and boxes 20 to 36 pixels from the text centre (the match allows two text heights, 30 pixels). ISO drawings scored lower than ASME. Title-block errors: one field on 5 of 20 drawings (a console run also read EDP-SYN-0000 as EDR-SYN-0000). Deskew found the rotation within 0.2 degrees when long lines exist; on 5 drawings without long enough lines it found none, and the reading still worked.
+
+Cost: 1.97 USD for 20 pages, about 4,800 input and 2,300 output tokens per page; output is mostly the model's reasoning (OD-53). About 30 to 120 seconds per page.
+
+### Not built, and next steps
+
+- Higher resolution or tiling for small text (the next thing to try against the F1 gap), and saving each reading in the suite output for diagnosis.
+- Line and circle detection (plan), so block 2 can find features on scans.
+- GD&T frames and symbols.
+- Calibration of the model's confidences (task 5); title-block masking for client scans (OD-51).

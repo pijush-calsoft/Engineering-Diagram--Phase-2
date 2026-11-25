@@ -11,8 +11,8 @@ text runs; map to drawing units from the title-block scale" (plan Phase 2).
   link them to features by value only.
 - **Units**: coordinates are read in points (1/72 in) and converted with the title block's
   units and scale. Without stated units they stay in points and the drawing is flagged.
-- **Scans**: a page with images and no text is reported as a scan; scans go through the
-  multimodal path (ADR-0007), which is not built yet (OD-43).
+- **Scans**: a page with images and no text is reported as a scan (``SCANNED_PDF``); the
+  block then reads it through the multimodal path (``edp_b1_parser.scan``, ADR-0007).
 
 Locators: ``view`` is the page (``page-1``), ``handle`` is ``p<page>/path-<n>`` or
 ``p<page>/text-<n>``, ``bbox`` is in drawing units.
@@ -173,7 +173,7 @@ def parse(data: bytes, file_id: str, version: str) -> tuple[Geometry, list[Flag]
             Flag(
                 code="SCANNED_PDF",
                 severity="review",
-                message="PDF pages hold images but no text: scans need the multimodal path (ADR-0007, OD-43)",
+                message="PDF pages hold images but no text: read as a scan (ADR-0007)",
             )
         )
 

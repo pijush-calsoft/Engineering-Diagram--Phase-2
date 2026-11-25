@@ -8,12 +8,16 @@ dependencies = [
     "edp-b2-interpretation",
     "edp-b3-knowledge-graph",
     "edp-contracts",
+    "edp-gateway",
     "ezdxf>=1.3",
+    "opencv-python-headless>=4.10",
     "pydantic>=2.7,<3",
+    "pypdfium2>=4.30",
 ]
 
 [tool.uv.sources]
 edp-contracts = { workspace = true }
+edp-gateway = { workspace = true }
 edp-b2-interpretation = { workspace = true }
 edp-b3-knowledge-graph = { workspace = true }
 edp-b1-parser = { workspace = true }

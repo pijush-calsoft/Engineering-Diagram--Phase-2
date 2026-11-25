@@ -4,6 +4,7 @@ Plain set:  --count N
 Family set for the Knowledge Graph evaluation:  --families N --revisions R
 DWG copies of an existing set (needs LibreDWG):  --dwg-from DIR
 Vector-PDF copies of an existing set:  --pdf-from DIR
+Scan copies of a vector-PDF set:  --scan-from DIR --dpi D --max-skew-deg A --seed S
 3D models (STEP and STL):  --models N
 """
 
@@ -15,6 +16,7 @@ from edp_eval.synth import write_family_set, write_set
 from edp_eval.synth.dwg import dxf2dwg_path, write_dwg_set
 from edp_eval.synth.models import write_model_set
 from edp_eval.synth.pdf import write_pdf_set
+from edp_eval.synth.scan import write_scan_set
 
 parser = argparse.ArgumentParser(prog="python -m edp_eval.synth", description=__doc__)
 parser.add_argument("--out", type=Path, required=True, help="output folder (keep it under eval/golden/data/)")
@@ -24,6 +26,9 @@ mode.add_argument("--families", type=int, help="number of part families (Knowled
 mode.add_argument("--dwg-from", type=Path, help="convert this DXF set to DWG (needs LibreDWG dxf2dwg)")
 mode.add_argument("--pdf-from", type=Path, help="write vector-PDF copies of this DXF set")
 mode.add_argument("--models", type=int, help="number of 3D models (STEP and STL)")
+mode.add_argument("--scan-from", type=Path, help="render this vector-PDF set as degraded scans (PNG)")
+parser.add_argument("--dpi", type=float, help="scan resolution (with --scan-from)")
+parser.add_argument("--max-skew-deg", type=float, help="largest random rotation (with --scan-from)")
 parser.add_argument("--revisions", type=int, default=None, help="revisions per family (with --families)")
 parser.add_argument("--seed", type=int, help="seed; same arguments give the same set")
 parser.add_argument("--uri-prefix", help="Data Fabric location for the manifest, s3://...")
@@ -39,6 +44,12 @@ if args.dwg_from is not None:
 if args.pdf_from is not None:
     ids = write_pdf_set(args.pdf_from, args.out)
     print(f"Wrote {len(ids)} vector PDFs, page maps and labels to {args.out}")
+    raise SystemExit(0)
+if args.scan_from is not None:
+    if args.dpi is None or args.max_skew_deg is None or args.seed is None:
+        parser.error("--scan-from needs --dpi, --max-skew-deg and --seed")
+    ids = write_scan_set(args.scan_from, args.out, args.dpi, args.max_skew_deg, args.seed)
+    print(f"Wrote {len(ids)} scans, scan maps and labels to {args.out}")
     raise SystemExit(0)
 if args.seed is None or args.uri_prefix is None:
     parser.error("--seed and --uri-prefix are required for --count and --families")

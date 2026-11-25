@@ -246,7 +246,7 @@ def test_iges_reads_holes_with_directory_entry_locators(tmp_path, models):
 
 def test_block_accepts_every_r1_format_and_flags_stl(tmp_path, models):
     parser = DrawingParser(FabricStore(tmp_path))
-    assert parser.accepts == {"dxf", "dwg", "pdf", "step", "iges", "stl"}
+    assert parser.accepts == {"dxf", "dwg", "pdf", "step", "iges", "stl", "image"}
     fabric = FabricStore(tmp_path)
     stl = next(models.glob("*.stl"))
     up = fabric.ingest(stl.name, stl.read_bytes(), uploader="t")

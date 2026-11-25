@@ -16,6 +16,8 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 | `AI_Engineering_Diagram_Platform_2170_0615 (1).pptx` (repo root); text copy in [docs/reference/deck-text.md](docs/reference/deck-text.md) | Reference only |
 | [docs/reference/plan-vs-deck.md](docs/reference/plan-vs-deck.md) | Where the two disagree. Follow the plan, and log the difference; never resolve one silently |
 
+The plan, the deck and its text copy are internal reference documents: they are git-ignored and kept only on the local machine (owner decision 2026-11-25). Never commit or publish them; cite them by section or slide.
+
 ## Rules
 
 - **Do not invent.** Every value, threshold, tool or licence in code or docs comes from the plan or deck, with a citation (plan §N / deck slide N). If neither gives it, write it as an open item in `docs/open-decisions.md`. Do not pick a default.
@@ -42,7 +44,7 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 ```
 contracts/      edp-contracts: plug-in contract v0.1, artifact schemas, JSON Schema exports (contracts/schemas/)
 platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (Model Gateway, ADR-0009)
-blocks/         b1_parser (DXF, DWG, PDF, STEP, IGES, STL), b2_interpretation (rule-based), b3_knowledge_graph (SQLite adapter) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
+blocks/         b1_parser (DXF, DWG, PDF, STEP, IGES, STL, scans), b2_interpretation (rule-based), b3_knowledge_graph (SQLite adapter) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
 orchestrator/   LangGraph graph, stub blocks 1-8, SQLite checkpointer (Phase 1 skeleton, ADR-0001)
 console/        React + Vite + TS console (Phase 1 shell + chat panel, assistant-ui); served by edp_orchestrator.server
 mcp/            MCP server wrappers per block            (not started)
@@ -77,6 +79,8 @@ uv run python -m edp_eval.synth --out eval/golden/data/synthetic-dwg --dwg-from 
 uv run python -m edp_eval.synth --out eval/golden/data/synthetic-pdf --pdf-from eval/golden/data/synthetic
 uv run python -m edp_eval.synth --out eval/golden/data/models --models 20 --seed 2026 --uri-prefix s3://edp-fabric/golden/models
 uv run python -m edp_eval.suites.models --golden eval/golden/data/models --value-tol 1e-6
+uv run python -m edp_eval.synth --out eval/golden/data/synthetic-scan --scan-from eval/golden/data/synthetic-pdf --dpi 150 --max-skew-deg 2 --seed 2026
+uv run python -m edp_eval.suites.parser_scan --golden eval/golden/data/synthetic-scan --value-tol 1e-6 --n-bins 10 --limit 20   # live model calls, about 2 USD
 uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/golden/data/synthetic eval/golden/data/models   # console at http://127.0.0.1:8765
 (cd console && npm install && npm run build)                                    # build the console UI
 uv run python -m edp_eval.synth --out eval/golden/data/synthetic --count 80 --seed 2026 --uri-prefix s3://edp-fabric/golden/synthetic
