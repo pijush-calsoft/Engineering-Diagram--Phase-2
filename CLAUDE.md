@@ -29,7 +29,7 @@ The plan, the deck and its text copy are internal reference documents: they are 
 - **Client data stays out of the repo** (plan principle 7). No drawings, models or results in git, and no client names in code or docs.
 - **No personal names** in docs. Use roles.
 - Git commit messages carry no AI attribution (user's global instruction).
-- **Before every commit:** run `bash scripts/ci/run_ci.sh` *after the last edit* and check **its own exit code** (never through a pipe such as `| grep`, which hides failures; that let a failing CI through on 2026-11-25), and read `git diff --cached -- '*pyproject.toml' uv.lock requirements*.txt`. Every new dependency must be one you added on purpose. (On 2026-11-25 an unrelated package, `robocrew`, entered the root dependencies outside the planned work, was swept into a commit by `git add -A`, and was removed in `96e293d`.)
+- **Before every commit:** run `bash scripts/ci/run_ci.sh` *after the last edit* and check **its own exit code** (never through a pipe such as `| grep`, which hides failures; that let a failing CI through on 2026-11-25), and read `git diff --cached -- '*pyproject.toml' uv.lock requirements*.txt`. Every new dependency must be one you added on purpose. (On 2026-11-25 an unrelated package, `robocrew`, entered the root dependencies outside the planned work, was swept into a commit by `git add -A`, and was removed in `1a2c7a0`.)
 - **Test file names must be unique across the repo** (pytest default import mode). Importlib mode is not used: it names test modules after their path, and the top-level `platform/` folder then hides Python's standard `platform` module.
 
 ## Updating the docs (required at the end of every phase or work session)

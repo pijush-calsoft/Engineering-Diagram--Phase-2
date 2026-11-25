@@ -8,9 +8,9 @@
 
 ## 1. Before Phase 3: dependency incident
 
-While starting Phase 3, the licence gate failed on packages nobody had planned: `openai`, `langchain-openai`, `tiktoken`, `pywin32`, `pillow` and others. Cause: around 10:30 on 2026-11-25 the package `robocrew` (a drone and robotics agent library that pulls in Gemini, Hugging Face and OpenCV) was added to the root `pyproject.toml`. The Phase 2 commit `924e4c3` at 10:33 swept it in through `git add -A`, without a review of the dependency diff. That commit also had a mypy error in the orchestrator CLI, because CI was not re-run after the last edit.
+While starting Phase 3, the licence gate failed on packages nobody had planned: `openai`, `langchain-openai`, `tiktoken`, `pywin32`, `pillow` and others. Cause: around 10:30 on 2026-11-25 the package `robocrew` (a drone and robotics agent library that pulls in Gemini, Hugging Face and OpenCV) was added to the root `pyproject.toml`. The Phase 2 commit `7b2b7e2` at 10:33 swept it in through `git add -A`, without a review of the dependency diff. That commit also had a mypy error in the orchestrator CLI, because CI was not re-run after the last edit.
 
-The owner chose to remove it. Commit `96e293d` removes `robocrew` (about 45 packages), regenerates the requirements files and fixes the typing. CI after the fix: 197 tests, licence gate 61 pass with 0 failures. CLAUDE.md now requires a full CI run after the last edit and a read of the dependency diff before every commit.
+The owner chose to remove it. Commit `1a2c7a0` removes `robocrew` (about 45 packages), regenerates the requirements files and fixes the typing. CI after the fix: 197 tests, licence gate 61 pass with 0 failures. CLAUDE.md now requires a full CI run after the last edit and a read of the dependency diff before every commit.
 
 ## 2. What was built
 
