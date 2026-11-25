@@ -10,6 +10,7 @@ dependencies = [
     "edp-kit",
     "edp-fabric",
     "edp-catalogue",
+    "edp-gateway",
     "edp-orchestrator",
     "edp-b1-parser",
     "edp-b2-interpretation",
@@ -28,7 +29,7 @@ package = false
 override-dependencies = ["matplotlib; sys_platform == 'never'"]
 
 [tool.uv.workspace]
-members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "orchestrator", "blocks/b1_parser", "blocks/b2_interpretation", "blocks/b3_knowledge_graph"]
+members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "platform/gateway", "orchestrator", "blocks/b1_parser", "blocks/b2_interpretation", "blocks/b3_knowledge_graph"]
 
 [tool.uv.sources]
 edp-contracts = { workspace = true }
@@ -37,13 +38,14 @@ edp-ci = { workspace = true }
 edp-kit = { workspace = true }
 edp-fabric = { workspace = true }
 edp-catalogue = { workspace = true }
+edp-gateway = { workspace = true }
 edp-orchestrator = { workspace = true }
 edp-b1-parser = { workspace = true }
 edp-b2-interpretation = { workspace = true }
 edp-b3-knowledge-graph = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "orchestrator/tests", "blocks/b1_parser/tests", "blocks/b2_interpretation/tests", "blocks/b3_knowledge_graph/tests"]
+testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "platform/gateway/tests", "orchestrator/tests", "blocks/b1_parser/tests", "blocks/b2_interpretation/tests", "blocks/b3_knowledge_graph/tests"]
 addopts = "-q"
 
 [tool.ruff]
@@ -54,7 +56,7 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_orchestrator", "edp_b1_parser", "edp_b2_interpretation", "edp_b3_knowledge_graph"]
+known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_gateway", "edp_orchestrator", "edp_b1_parser", "edp_b2_interpretation", "edp_b3_knowledge_graph"]
 
 [tool.mypy]
 python_version = "3.11"

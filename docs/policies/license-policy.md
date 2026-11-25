@@ -101,6 +101,7 @@ The plan is the baseline (see [plan-vs-deck.md](../reference/plan-vs-deck.md)).
 | cadquery-ocp (OCCT) | LGPL 2.1 with exception (plan §4.2) | Unmodified library. Needs VTK (BSD) at import |
 | pypdfium2 | Metadata: "BSD-3-Clause, Apache-2.0, dependency licenses" | Scoped exception in `license_policy.toml` after reading the bundled licence files (FreeType under the FTL; ICU's GPL text is the Autoconf exception only). Pending OD-31 |
 | trimesh | MIT | Library |
+| LiteLLM 1.111.0 (Model Gateway, ADR-0009) | MIT (`License-Expression`); its LICENSE carves out a `litellm/enterprise/` folder, which the installed wheel does not contain | Library, in-process. Four dependencies pass through reviewed exceptions: python-dateutil (Apache-2.0 / BSD-3-Clause), regex (Apache-2.0 AND CNRI-Python, pending OD-31), tiktoken (MIT text in the License field), tokenizers (unversioned Apache classifier; bundled crates all permissive per its SBOM) |
 | matplotlib | Declared by VTK; bundles licence text the gate refuses to waive | Not installed: excluded by `override-dependencies` in the root `pyproject.toml`. Nothing here imports it |
 
 ## 4. Deck tools not yet in the plan

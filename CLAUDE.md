@@ -22,6 +22,7 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 - **Source locators everywhere** (plan principle 1). No output item without a `SourceLocator`.
 - **Contract first.** Blocks talk only through `edp_contracts` (plan §3). A breaking change needs a new major contract version.
 - **Licence policy** (plan §9, [docs/policies/license-policy.md](docs/policies/license-policy.md)). Never import GPL, AGPL, SSPL or BSL code in-process. GPL tools run as separate processes or containers. `python -m edp_ci.license_gate` must pass.
+- **Every model call goes through `edp_gateway`** (ADR-0009): no other code imports litellm or openai, or reads the key.
 - **Hosted model APIs only** (OD-5, ADR-0005): OpenAI (OD-37), including multimodal for vision and OCR (OD-38, ADR-0007); no local LLM, no fine-tuning. Keys live only in `.env` (git-ignored; template `.env.example`). Never print, commit or paste a key.
 - **Client data stays out of the repo** (plan principle 7). No drawings, models or results in git, and no client names in code or docs.
 - **No personal names** in docs. Use roles.
@@ -40,7 +41,7 @@ The AI-Powered Engineering Diagram Platform (EDP) monorepo. Read this first in e
 
 ```
 contracts/      edp-contracts: plug-in contract v0.1, artifact schemas, JSON Schema exports (contracts/schemas/)
-platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (not started)
+platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (Model Gateway, ADR-0009)
 blocks/         b1_parser (DXF, DWG, PDF, STEP, IGES, STL), b2_interpretation (rule-based), b3_knowledge_graph (SQLite adapter) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
 orchestrator/   LangGraph graph, stub blocks 1-8, SQLite checkpointer (Phase 1 skeleton, ADR-0001)
 console/        React + Vite + TS console shell (Phase 1); served by edp_orchestrator.server
@@ -59,9 +60,11 @@ Local setup (OD-2, runs locally): `cp .env.example .env`, then fill in `OPENAI_A
 uv sync                                   # install the workspace (Python >= 3.11; uv)
 uv run pytest                             # all tests
 uv run ruff check .                       # lint
-uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src orchestrator/src blocks/b1_parser/src blocks/b2_interpretation/src blocks/b3_knowledge_graph/src
+uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src platform/gateway/src orchestrator/src blocks/b1_parser/src blocks/b2_interpretation/src blocks/b3_knowledge_graph/src
 uv run python -m edp_ci.license_gate      # licence policy gate
 uv run python -m edp_contracts.export     # regenerate contracts/schemas/*.json
+uv run python -m edp_gateway check       # live check of every configured model (synthetic text; never prints the key)
+uv run python -m edp_gateway usage       # model spend and tokens from the usage log
 bash scripts/ci/run_ci.sh                 # everything CI runs
 uv export --format requirements.txt --no-dev --no-hashes --frozen -o requirements.txt   # after any dependency change
 uv export --format requirements.txt --no-hashes --frozen -o requirements-dev.txt

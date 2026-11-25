@@ -17,6 +17,7 @@ New ADRs start from [0000-template.md](0000-template.md).
 | [0006](0006-r2-write-back-targets.md) | First write-back targets for R2 | **Accepted** | 2026-11-24 | OD-4 (decided) |
 | [0007](0007-vision-via-multimodal-api.md) | Vision, OCR and symbol reading through a multimodal LLM API | **Accepted** | 2026-11-24 | OD-38 (decided), OD-39, OD-42, OD-43 |
 | [0008](0008-local-first-adapters.md) | Local-first adapters for platform services | **Accepted** | 2026-11-25 | OD-10, OD-21, OD-44 |
+| [0009](0009-model-gateway-in-process.md) | Model Gateway as an in-process LiteLLM library for the POC | Proposed | 2026-11-25 | OD-21, OD-39, OD-50, OD-51 |
 
 ## Reserved numbers
 

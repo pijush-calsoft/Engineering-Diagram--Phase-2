@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Plan reference | plan §6 Phase 1 (4 weeks, R1) |
-| Status | In progress. Walking skeleton and console shell built; Model Gateway and MCP wrappers not started |
+| Status | In progress. Walking skeleton, console shell and Model Gateway (in-process, ADR-0009) built; MCP wrappers, chat panel and the nightly benchmark not started |
 | Last updated | 2026-11-25 |
 
 ## 1. Approach
@@ -32,7 +32,7 @@ New dependencies: fastapi, httpx, python-multipart, langgraph, langgraph-checkpo
 | Criterion | Status |
 |---|---|
 | A file uploaded in the console produces a versioned dataset, a run with eight stub block results, lineage visible in Marquez, and an end-to-end trace in Langfuse | **Partly met.** Upload from the console works (2026-11-25). Upload → versioned dataset → run with eight stub results → element-level lineage from the report back to the file commit works and is tested (`test_upload_to_eight_stub_results_with_lineage`). Not yet: upload from the console (console not built), Marquez and Langfuse (need containers, OD-21) |
-| Every gateway call is authenticated with mTLS and logged with tokens and cost | **Not started.** Gateway not built; mTLS needs step-ca (OD-21) |
+| Every gateway call is authenticated with mTLS and logged with tokens and cost | **Logging met locally** (2026-11-25): every call, refused and failed ones included, is a usage-log row with tokens and cost. mTLS does not apply in-process; it returns with the proxy (ADR-0009, OD-21) |
 | Restarting any block mid-run resumes from the checkpoint | **Met locally.** `test_restart_mid_run_resumes_from_checkpoint`: block 5 crashes, a new orchestrator instance on the same checkpoint store resumes, and blocks 1 to 4 are not re-run |
 
 ## 4. Problems found and fixed
@@ -58,7 +58,28 @@ report traces back to: <file hash>@<commit>
 
 ## 6. Next in Phase 1
 
-1. **Model Gateway client**: OpenAI through LiteLLM, with usage logging and guardrails. Needs `OPENAI_API_KEY` in `.env` and model names (OD-43).
+1. **Model Gateway: built 2026-11-25** (§7). Still open: nightly benchmark job (DeepEval), Presidio and NeMo Guardrails (OD-51), image masking for client drawings (OD-51).
 2. **Console shell: built 2026-11-25** ([console/README.md](../../console/README.md)). Pipeline map with live block status over SSE, drawing sheet with source tracing, inspector, review actions, run events; local console API `edp_orchestrator.server`. The chat panel waits for the Model Gateway (OD-43).
 3. **MCP wrappers** per block (plan §2.2, §3).
 4. When containers are available (OD-21): swap the adapters for NATS, SeaweedFS + lakeFS, PostgreSQL, Marquez, Langfuse, step-ca.
+
+## 7. Model Gateway (2026-11-25)
+
+Built `platform/gateway` (`edp_gateway`) as an in-process library on the LiteLLM SDK ([ADR-0009](../adr/0009-model-gateway-in-process.md), [README](../../platform/gateway/README.md)). Every call: role routing from `.env` (OD-43, OD-42), refusal of client images (OD-39, OD-51), redaction, `<data>` wrapping and injection screening of untrusted text (plan §10 risk 7), budget check (OD-50), LiteLLM call with JSON-schema output validated by pydantic, and a usage-log row with tokens and cost but no prompt text.
+
+| Item | Detail |
+|---|---|
+| Files | `platform/gateway/src/edp_gateway/{config,redact,guard,usage,backend,gateway,__main__}.py`, `tests/test_gateway.py` (14 tests, fake backend, no network) |
+| Cost source | LiteLLM 1.111.0 bundled cost map, never fetched: gpt-5.5 5e-06 / 3e-05 USD per input / output token; text-embedding-3-large 1.3e-07 |
+| Licences | LiteLLM MIT (no `litellm/enterprise/` folder in the wheel). Reviewed exceptions: python-dateutil, regex (CNRI-Python, OD-31), tiktoken, tokenizers |
+| Problem found | The first phone-number rule redacted tolerances such as `+0.1/-0.0`. Now a `+` number may not contain `.` or `/` and needs 8+ digits; a test keeps tolerances, dimensions and standards text intact |
+
+Verification:
+
+```text
+uv run pytest platform/gateway/tests: 14 passed
+uv run python -m edp_gateway check (live, synthetic text only):
+  code/judge/text/vision gpt-5.5: ok, reply 'ready', 54+12 tokens, 0.00063 USD each (54 x 5e-06 + 12 x 3e-05)
+  embed text-embedding-3-large: ok, 3072 dimensions, 5 tokens, 6.5e-07 USD
+uv run python -m edp_gateway usage: 5 calls logged, 0.00252 USD; the usage database holds no prompt text
+```
