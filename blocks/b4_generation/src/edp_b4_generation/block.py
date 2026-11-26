@@ -14,6 +14,7 @@ from edp_contracts import Artifact, BlockRequest, BlockResult, Flag
 from edp_contracts.artifacts.cad_script import SCHEMA_VERSION, CadScript, ScriptParameter
 from edp_contracts.artifacts.design_graph import DesignGraph
 from edp_kit import ArtifactStore, pass_through, skip_reason
+from edp_kit.passthrough import SKIPPED_SCHEME
 
 
 class Generation:
@@ -51,6 +52,17 @@ class Generation:
             except NoTemplateError as exc:
                 flags.append(Flag(code="NO_TEMPLATE", message=str(exc), severity="review"))
                 metrics[art.uri] = {"template": None}
+                # A placeholder keeps the run going once a person approves: blocks 5 to 8 see a
+                # skipped input and pass through (ADR-0010) instead of the run stopping for want
+                # of a cad_script.
+                outputs.append(
+                    Artifact(
+                        kind="cad_script",
+                        uri=f"{SKIPPED_SCHEME}{req.run_id}/{self.name}/cad_script-{i}",
+                        schema_version="skipped",
+                        sources=art.sources,
+                    )
+                )
                 continue
             script = CadScript(
                 language="cadquery",

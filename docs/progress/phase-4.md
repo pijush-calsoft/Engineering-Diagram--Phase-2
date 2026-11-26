@@ -40,6 +40,7 @@ The caveat from Phases 2 and 3 applies: the drawings come from the same generato
 - The first dimensional check missed an undersized hole: it probed the bore centre and the material outside, but not the drawn diameter. A probe just inside the drawn bore now catches it (`test_model_that_misses_the_drawing_is_flagged`).
 - The console's run view read the status before the `running` flag. A run that finished between the two reads was shown as stopped. With more real blocks the window grew and a console test failed. The view now reads the flag first. This race existed before this work.
 - Writing files from Python on this Windows machine changes line endings; `scripts/ci/run_ci.sh` must stay LF (`.gitattributes`). Edits preserve each file's existing line endings.
+- A construction run on a drawing no template matches stopped at block 5 after the `NO_TEMPLATE` review was approved (`no input of kinds ['cad_script']`). Block 4 now writes a `skipped://` placeholder for that drawing, so blocks 5 to 8 pass the run through (ADR-0010). Found with a steel-frame plan and section exported from another BIM tool; `orchestrator/tests/test_no_template_run.py` covers it with a bracket drawing. What blocks 1 and 2 make of such drawings is OD-62.
 
 ## 5. Verification (2026-11-26)
 
