@@ -41,6 +41,7 @@ CONSOLE_DIST = Path(__file__).resolve().parents[3] / "console" / "dist"
 POLL_SECONDS = 0.2
 SAMPLE_SUFFIXES = {".dxf", ".dwg", ".pdf", ".step", ".stp", ".igs", ".iges", ".stl"}
 SAMPLE_SUFFIXES |= {".png", ".jpg", ".jpeg", ".tif", ".tiff"}  # scans (ADR-0007)
+CONSTRUCTION_SAMPLE_PREFIX = "con-"  # samples from edp_eval.synth.construction run with that domain pack
 
 
 class StartedRun(BaseModel):
@@ -176,19 +177,22 @@ class Console:
             self.meshes[run_id] = mesh_of(self.fabric.read(up.uri), up.kind)
         return self.meshes[run_id]
 
-    def start(self, filename: str, data: bytes, data_class: DataClass = "client") -> StartedRun:
+    def start(
+        self, filename: str, data: bytes, data_class: DataClass = "client", domain_pack: str | None = None
+    ) -> StartedRun:
         upload = self.fabric.ingest(filename, data, uploader="console")
         run_id = f"run-{uuid.uuid4().hex[:8]}"
         self.uploads[run_id] = upload
         self.data_class[run_id] = data_class
         self.started[run_id] = time.time()
         self.running.add(run_id)
+        # Blocks 4 to 8 run only for a run that names its domain pack (edp_kit.passthrough).
+        params: dict[str, str] = {"data_class": data_class}
+        if domain_pack:
+            params["domain_pack"] = domain_pack
         threading.Thread(
             target=self._work,
-            args=(
-                run_id,
-                lambda: self.orchestrator.start(run_id, [upload.as_artifact()], {"data_class": data_class}),
-            ),
+            args=(run_id, lambda: self.orchestrator.start(run_id, [upload.as_artifact()], params)),
             daemon=True,
         ).start()
         return StartedRun(run_id=run_id, upload=upload)
@@ -209,8 +213,11 @@ class Console:
             self.running.discard(run_id)
 
     def view(self, run_id: str) -> RunView:
+        # Read "running" before the status: if the run ends between the two reads, a status read
+        # first could be a mid-run snapshot reported as finished.
+        running = run_id in self.running
         status = self.orchestrator.status(run_id)
-        if status.state == "unknown" and run_id not in self.running:
+        if status.state == "unknown" and not running:
             raise KeyError(run_id)
         artifacts = [
             {"id": r.id, "block": r.block, "kind": r.artifact.kind, "uri": r.artifact.uri}
@@ -218,7 +225,7 @@ class Console:
         ]
         return RunView(
             status=status,
-            running=run_id in self.running,
+            running=running,
             upload=self.uploads.get(run_id),
             artifacts=artifacts,
         )
@@ -261,16 +268,18 @@ def create_app(console: Console) -> FastAPI:
         return sorted(sample_files())
 
     @app.post("/api/runs/sample", response_model=StartedRun)
-    def run_sample(name: str) -> StartedRun:
+    def run_sample(name: str, domain_pack: str | None = None) -> StartedRun:
         path = sample_files().get(name)
         if path is None:
             raise HTTPException(status_code=404, detail=f"no sample drawing named {name!r}")
-        return console.start(path.name, path.read_bytes(), data_class="synthetic")
+        if domain_pack is None and name.startswith(CONSTRUCTION_SAMPLE_PREFIX):
+            domain_pack = "construction"  # construction golden set (edp_eval.synth.construction)
+        return console.start(path.name, path.read_bytes(), data_class="synthetic", domain_pack=domain_pack)
 
     @app.post("/api/runs", response_model=StartedRun)
-    async def run_upload(file: UploadFile) -> StartedRun:
+    async def run_upload(file: UploadFile, domain_pack: str | None = None) -> StartedRun:
         try:
-            return console.start(file.filename or "upload", await file.read())
+            return console.start(file.filename or "upload", await file.read(), domain_pack=domain_pack)
         except UnsupportedTypeError as exc:
             raise HTTPException(status_code=415, detail={"code": exc.code, "message": str(exc)}) from exc
 

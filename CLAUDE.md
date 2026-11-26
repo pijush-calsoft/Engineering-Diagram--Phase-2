@@ -44,11 +44,12 @@ The plan, the deck and its text copy are internal reference documents: they are 
 ```
 contracts/      edp-contracts: plug-in contract v0.1, artifact schemas, JSON Schema exports (contracts/schemas/)
 platform/       kit/ (event bus, block service), fabric/, catalogue/ (Phase 1 local adapters, ADR-0008); gateway/ (Model Gateway, ADR-0009)
-blocks/         b1_parser (DXF, DWG, PDF, STEP, IGES, STL, scans), b2_interpretation (rule-based), b3_knowledge_graph (SQLite adapter) … b8_report, optimiser/ (R2), twin/ (R3)   (others not started)
+blocks/         b1_parser (DXF, DWG, PDF, STEP, IGES, STL, scans), b2_interpretation (rule-based), b3_knowledge_graph (SQLite adapter), b4_generation (plate template), b5_opencad (sandbox, checks, STEP), b6_solvers (Gmsh + CalculiX), b8_report (fact-checked DOCX); b7_surrogate, optimiser/ (R2), twin/ (R3) not started
+domain_packs/   per-family material cards, load cases (construction first; ADR-0010)
 orchestrator/   LangGraph graph, stub blocks 1-8, SQLite checkpointer (Phase 1 skeleton, ADR-0001)
 console/        React + Vite + TS console (Phase 1 shell + chat panel, assistant-ui); served by edp_orchestrator.server
 mcp/            MCP server wrappers per block            (not started)
-eval/           edp-eval: golden manifests, metrics, synthetic drawing generator (plan §7, OD-7)
+eval/           edp-eval: golden manifests, metrics, synthetic drawing generator incl. construction base plates (plan §7, OD-7, OD-55)
 deploy/         Helm, Argo CD, OpenTofu                  (out of POC scope: no containers, OD-21)
 docs/           adr/, progress/, reference/, requirements/, policies/, setup/, open-decisions.md
 scripts/ci/     edp-ci: provider-neutral CI steps and licence gate (not in Appendix A; added for Phase 0 task 5)
@@ -62,7 +63,7 @@ Local setup (OD-2, runs locally): `cp .env.example .env`, then fill in `OPENAI_A
 uv sync                                   # install the workspace (Python >= 3.11; uv)
 uv run pytest                             # all tests
 uv run ruff check .                       # lint
-uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src platform/gateway/src orchestrator/src blocks/b1_parser/src blocks/b2_interpretation/src blocks/b3_knowledge_graph/src
+uv run mypy contracts/src eval/src scripts/ci/src platform/kit/src platform/fabric/src platform/catalogue/src platform/gateway/src orchestrator/src blocks/b1_parser/src blocks/b2_interpretation/src blocks/b3_knowledge_graph/src blocks/b4_generation/src blocks/b5_opencad/src blocks/b6_solvers/src blocks/b8_report/src
 uv run python -m edp_ci.license_gate      # licence policy gate
 uv run python -m edp_contracts.export     # regenerate contracts/schemas/*.json
 uv run python -m edp_gateway check       # live check of every configured model (synthetic text; never prints the key)
@@ -85,6 +86,8 @@ uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/go
 (cd console && npm install && npm run build)                                    # build the console UI
 (cd console && npm run test:e2e)                                                # console end-to-end tests (Playwright, installed Edge; no model calls)
 uv run python -m edp_eval.synth --out eval/golden/data/synthetic --count 80 --seed 2026 --uri-prefix s3://edp-fabric/golden/synthetic
+uv run python -m edp_eval.synth --out eval/golden/data/construction --construction 24 --seed 2026 --uri-prefix s3://edp-fabric/golden/construction
+uv run python -m edp_orchestrator --file eval/golden/data/construction/con-iso-base_plate-003.dxf --data-dir var/con --real-blocks --domain-pack construction --approve-as design-lead   # drawing to signed report; needs CalculiX and Gmsh (setup guide §3a)
 ```
 
 Regenerate `contracts/schemas/` after any contract change, and commit the result with the change.

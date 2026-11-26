@@ -69,6 +69,9 @@ def interpret(geometry: Geometry) -> tuple[DesignGraph, list[Flag], dict[str, An
             "association": "part_level",
             "dimensions": [d.locator.handle],
         }
+        role = rec.outline_roles.get(d.locator.handle or "")
+        if role:
+            attrs["role"] = role  # outline size: length, width or thickness (used by block 4)
         nodes.append(
             DesignNode(id=f"dim.{d.locator.handle}", kind="parameter", attributes=attrs, sources=[d.locator])
         )

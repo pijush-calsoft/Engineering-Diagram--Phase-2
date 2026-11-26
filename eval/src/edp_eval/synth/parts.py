@@ -9,7 +9,9 @@ import random
 from dataclasses import dataclass, field
 from typing import Literal
 
-Family = Literal["plate", "bracket"]
+Family = Literal["plate", "bracket", "base_plate"]
+# Families of the plain set (``write_set``). ``base_plate`` (construction: steel column base
+# plates) has its own set, ``edp_eval.synth.construction``.
 FAMILIES: tuple[Family, ...] = ("plate", "bracket")
 
 
@@ -83,4 +85,8 @@ def sample_bracket(rng: random.Random) -> Bracket:
 
 
 def sample(family: Family, rng: random.Random) -> Part:
+    if family == "base_plate":
+        from edp_eval.synth.construction import sample_base_plate  # avoids an import cycle
+
+        return sample_base_plate(rng)
     return sample_plate(rng) if family == "plate" else sample_bracket(rng)

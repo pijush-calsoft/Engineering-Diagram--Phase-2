@@ -24,6 +24,16 @@ parser.add_argument(
     action="store_true",
     help="use blocks registered through the edp.blocks entry point; stubs for the rest",
 )
+parser.add_argument(
+    "--domain-pack",
+    default=None,
+    help="domain pack for blocks 4 to 8, e.g. construction (domain_packs/); without it they pass through",
+)
+parser.add_argument(
+    "--approve-as",
+    default=None,
+    help="approve every review stop as this reviewer (for unattended local runs; sign-off is still recorded)",
+)
 args = parser.parse_args()
 
 args.data_dir.mkdir(parents=True, exist_ok=True)
@@ -42,7 +52,13 @@ upload = fabric.ingest(args.file.name, args.file.read_bytes(), uploader="cli")
 if upload.warning:
     print(f"warning: {upload.warning}")
 run_id = args.run_id or f"run-{uuid.uuid4().hex[:8]}"
-status = orchestrator.start(run_id, [upload.as_artifact()])
+params = {} if args.domain_pack is None else {"domain_pack": args.domain_pack}
+status = orchestrator.start(run_id, [upload.as_artifact()], params)
+while status.state == "awaiting_review" and args.approve_as:
+    pending = status.results[-1]
+    codes = [f["code"] for f in pending["flags"]]
+    print(f"review: {pending['block']} asks for review {codes}; approved as {args.approve_as}")
+    status = orchestrator.review(run_id, "approve", args.approve_as)
 
 print(f"uploaded {upload.filename} as {upload.kind}, dataset {upload.dataset_id}, commit {upload.commit}")
 print(f"run {run_id}: {status.state}" + (f" ({status.error})" if status.error else ""))

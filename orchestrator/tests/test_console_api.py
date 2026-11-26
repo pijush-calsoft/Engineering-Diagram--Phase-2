@@ -31,9 +31,8 @@ def wait(client: TestClient, run_id: str) -> dict:
 def test_blocks_list_real_and_stub(client):
     c, _ = client
     blocks = {b["name"]: b["real"] for b in c.get("/api/blocks").json()}
-    assert (
-        len(blocks) == 8 and blocks["b1_parser"] and blocks["b2_interpretation"] and not blocks["b8_report"]
-    )
+    assert len(blocks) == 8 and blocks["b1_parser"] and blocks["b2_interpretation"] and blocks["b8_report"]
+    assert not blocks["b7_surrogate"]  # the only stub left (surrogate and envelope not built)
 
 
 def test_sample_run_end_to_end(client):
@@ -56,7 +55,8 @@ def test_upload_review_and_errors(client, tmp_path):
     bad = c.post("/api/runs", files={"file": ("x.dxf", b"not a drawing")})
     assert bad.status_code == 415
     path = next((tmp_path / "golden").glob("*.dxf"))
-    console.blocks[3].status = "needs_review"  # stub b4 asks for review (b1 to b3 are real blocks)
+    # Stub b7 asks for review. Blocks 4 to 6 and 8 are real but pass a run with no domain pack through.
+    console.blocks[6].status = "needs_review"
     started = c.post("/api/runs", files={"file": (path.name, path.read_bytes())}).json()
     assert wait(c, started["run_id"])["status"]["state"] == "awaiting_review"
     assert (

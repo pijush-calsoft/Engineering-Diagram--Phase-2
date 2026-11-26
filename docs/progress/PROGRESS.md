@@ -2,7 +2,7 @@
 
 Read this first in every session. Update it at the end of every session (see [CLAUDE.md](../../CLAUDE.md)).
 
-**Current phases: Phase 3 in progress (Interpretation and Knowledge Graph built; requirements parsing and embeddings pending OD-43/OD-42); Phase 2 mostly done (all inputs except scans); Phase 1 gateway pending the OpenAI key in `.env` (models chosen, OD-43); Phase 0 sign-off pending.**
+**Construction slice (2026-11-26, OD-55): a steel base-plate drawing now runs through every block except 7, from drawing to editable CadQuery model, STEP, CalculiX margin and a fact-checked DOCX report awaiting sign-off ([phase-4.md](phase-4.md), [phase-5.md](phase-5.md), [phase-6.md](phase-6.md)).** Current phases: Phase 3 in progress (Interpretation and Knowledge Graph built; requirements parsing and embeddings pending OD-43/OD-42); Phase 2 mostly done (all inputs except scans); Phase 1 gateway pending the OpenAI key in `.env` (models chosen, OD-43); Phase 0 sign-off pending.**
 
 ## Phases (plan §5)
 
@@ -12,9 +12,9 @@ Read this first in every session. Update it at the end of every session (see [CL
 | 1 | Platform services and orchestrator skeleton | R1 | 4 weeks | **In progress**: walking skeleton, console shell (ADR-0008) and Model Gateway (ADR-0009) and chat panel with cited answers built; MCP wrappers and nightly benchmark pending | [phase-1.md](phase-1.md) |
 | 2 | Drawing Parser | R1 | 5 weeks | **Mostly done**: every R1 input built, scans included; scans miss the dimension F1 target on synthetic data (0.80 vs 0.85); calibration needs real drawings | [phase-2.md](phase-2.md) |
 | 3 | Interpretation and Knowledge Graph | R1 | 4 weeks | **In progress**: blocks 2 and 3 built; all three Phase 3 exit targets met on the synthetic family set; requirements parsing and embeddings pending | [phase-3.md](phase-3.md) |
-| 4 | Generation and OpenCAD Adapters | R1 | 5 weeks | Not started | |
-| 5 | Solver Connectors and Surrogate | R1 | 6 weeks | Not started | |
-| 6 | Insight, audit trail and R1 hardening | R1 | 4 weeks | Not started | |
+| 4 | Generation and OpenCAD Adapters | R1 | 5 weeks | **In progress**: plate template, sandbox, validity and dimensional checks, STEP/STL built (construction slice); LLM path and brackets pending | [phase-4.md](phase-4.md) |
+| 5 | Solver Connectors and Surrogate | R1 | 6 weeks | **In progress**: CalculiX via Gmsh, domain-pack loads and materials, margins, one benchmark within 3 %; surrogate and envelope not started | [phase-5.md](phase-5.md) |
+| 6 | Insight, audit trail and R1 hardening | R1 | 4 weeks | **In progress**: descriptive and diagnostic report, fact check, DOCX, sign-off stop; PDF, LLM narrative, audit export, hardening pending | [phase-6.md](phase-6.md) |
 | 7 | Optimiser, redlines and write-back | R2 | 6 weeks | Not started | |
 | 8 | Digital twin | R3 | 8 weeks | Not started | |
 
@@ -43,6 +43,7 @@ The plan's phases are the baseline (OD-8, decided: "take time to complete all").
 
 ## What the next session should do
 
+0. Construction slice next steps (OD-55 to OD-61): real project loads for the pack (OD-56); mesh convergence (OD-57); fin plates and angle cleats; code checks (anchor tension, bolt bearing); PDF export; review of the four new licence exceptions (OD-59); the surrogate and envelope (block 7); a console view for margins and the report.
 0. Phase 3 still open: requirements parsing (OD-43), embeddings (OD-42), AGE/Postgres store (OD-21), interpretation of PDF and 3D inputs. Next candidates: Phase 4 Generation, Phase 5 OpenCAD Adapters.
 0. Phase 2 still open: scan dimension F1 (try higher resolution or tiling), line and circle detection on scans, title-block masking for client scans (OD-51), real-drawing golden data, calibration ([phase-2.md](phase-2.md)).
 0. Phase 1 still open (console shell done): Model Gateway client (OpenAI through LiteLLM; needs `OPENAI_API_KEY` and OD-43 models), console shell (React, chat panel, pipeline map from `run.*` events), MCP wrappers.
@@ -71,3 +72,4 @@ The plan's phases are the baseline (OD-8, decided: "take time to complete all").
 | 2026-11-25 | LibreDWG 0.14 (owner download): parser prefers it; found 0.14's DXF import stores dimension rotation as oblique angle; test-DWG writer repairs it via dwgread/dwgwrite JSON; DWG set regenerated | DWG suites 1.0 (parser and interpretation, 0 flags); `run_ci.sh` exit 0: mypy 62 files, 231 tests (DWG tests run on 0.14), licence gates pass |
 | 2026-11-25 | Recorded owner answers: OD-12 (all families), OD-18 (free and local CI), OD-21 (no containers), OD-39 (POC yes, identifiers removed), OD-44 (deferred), OD-49 (allowed; download still blocked), OD-10 delegated (NATS, ADR-0002 Accepted), OD-42/43 models | Docs only; LibreDWG 0.14 download tried and reset by the network |
 | 2026-11-25 | Rest of Phase 2: DWG (LibreDWG 0.11 from conda-forge, separate process), vector PDF (pypdfium2), STEP and IGES (OCP), STL (trimesh); geometry schema 0.2.0 with `solids`; DXF recovery for invalid XDATA and dimension blocks; golden sets for DWG, PDF and 20 3D models; models suite; console shows samples of every format and 3D summaries | `run_ci.sh` exit 0: mypy 62 files, 231 tests, licence gates pass (matplotlib excluded by a uv override). DWG and PDF sets score as the DXF set; STEP holes exact on 20 models; STL hints 20 of 20 |
+| 2026-11-26 | Construction slice (OD-55): construction golden set (24 steel base plates, EN 1090-2 / EN 1993-1-8 detailing); block 2 names outline dimensions; blocks 4, 5, 6 and 8 built; `solver_runs` schema; `domain_packs/construction`; pass-through for runs without a pack (ADR-0010); CLI `--domain-pack`, `--approve-as`; console `domain_pack`; fixed a console race (status read before the running flag); CalculiX and Gmsh set up outside the workspace | `run_ci.sh` exit 0: ruff, mypy 94 files, 279 passed and 2 skipped, requirements in sync, licence gate 122 pass and 11 exceptions. End to end on `con-iso-base_plate-003`: margin 0.36 under the illustrative load, 21 of 21 report claims verified, DOCX written. Cantilever benchmark within 3 % |

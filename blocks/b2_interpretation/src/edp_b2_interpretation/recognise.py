@@ -88,6 +88,9 @@ class Recognition:
     features: list[Feature]
     unassociated: list[GeometryEntity]  # dimensions linked to no feature (part-level)
     flags: list[Flag]
+    # Part-level dimensions that measure a whole outline: handle -> "length", "width" or
+    # "thickness". Block 4 (Generation) needs the overall size of a plate (plan Phase 4).
+    outline_roles: dict[str, str] = field(default_factory=dict)
 
 
 def _rectangles(entities: list[GeometryEntity]) -> list[Rect]:
@@ -291,8 +294,54 @@ def _faces(arc: GeometryEntity, dx: float, dy: float) -> bool:
     return close(math.cos(mid) * dx + math.sin(mid) * dy, 1.0)
 
 
+def outline_roles(rects: list[Rect], dims: list[GeometryEntity], features: list[Feature]) -> dict[str, str]:
+    """Name the dimensions that measure a plate's whole outline.
+
+    A plate is drawn as a plan view (the rectangle that holds its holes or slots) and an edge
+    view (another rectangle with the same x extent). A linear dimension across the plan view's
+    x extent is the length, across its y extent the width, and across the edge view's y extent
+    the thickness. Other parts (brackets) have no such pair and get no roles.
+    """
+    plan = None
+    for rect in sorted(rects, key=lambda rc: -rc.area):
+        if any(_feature_inside(f, rect) for f in features):
+            plan = rect
+            break
+    if plan is None:
+        return {}
+    edge = next(
+        (
+            rc
+            for rc in rects
+            if rc is not plan and close(rc.x0, plan.x0) and close(rc.x1, plan.x1) and rc.area < plan.area
+        ),
+        None,
+    )
+    roles: dict[str, str] = {}
+    for d in _linear(dims, 0, plan.x0, plan.x1):
+        roles[d.locator.handle or ""] = "length"
+    for d in _linear(dims, 1, plan.y0, plan.y1):
+        roles[d.locator.handle or ""] = "width"
+    if edge is not None:
+        for d in _linear(dims, 1, edge.y0, edge.y1):
+            roles[d.locator.handle or ""] = "thickness"
+    roles.pop("", None)
+    return roles
+
+
+def _feature_inside(f: Feature, rect: Rect) -> bool:
+    for loc in f.sources:
+        if loc.bbox is not None:
+            cx, cy = (loc.bbox[0] + loc.bbox[2]) / 2, (loc.bbox[1] + loc.bbox[3]) / 2
+            if rect.contains(cx, cy):
+                return True
+    return False
+
+
 def recognise(geometry: Geometry) -> Recognition:
     r = _Recogniser(geometry)
-    features = r.holes(_rectangles(geometry.entities)) + r.slots() + r.bends()
+    rects = _rectangles(geometry.entities)
+    features = r.holes(rects) + r.slots() + r.bends()
     unassociated = [d for d in r.dims if (d.locator.handle or "") not in r.used]
-    return Recognition(features=features, unassociated=unassociated, flags=r.flags)
+    roles = outline_roles(rects, unassociated, features)
+    return Recognition(features=features, unassociated=unassociated, flags=r.flags, outline_roles=roles)

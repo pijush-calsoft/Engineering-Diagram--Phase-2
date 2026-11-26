@@ -6,6 +6,7 @@ DWG copies of an existing set (needs LibreDWG):  --dwg-from DIR
 Vector-PDF copies of an existing set:  --pdf-from DIR
 Scan copies of a vector-PDF set:  --scan-from DIR --dpi D --max-skew-deg A --seed S
 3D models (STEP and STL):  --models N
+Construction base plates (ISO, steel grades):  --construction N
 """
 
 import argparse
@@ -13,6 +14,7 @@ from pathlib import Path
 
 from edp_b1_parser.dwg import converter
 from edp_eval.synth import write_family_set, write_set
+from edp_eval.synth.construction import write_construction_set
 from edp_eval.synth.dwg import dxf2dwg_path, write_dwg_set
 from edp_eval.synth.models import write_model_set
 from edp_eval.synth.pdf import write_pdf_set
@@ -27,6 +29,7 @@ mode.add_argument("--dwg-from", type=Path, help="convert this DXF set to DWG (ne
 mode.add_argument("--pdf-from", type=Path, help="write vector-PDF copies of this DXF set")
 mode.add_argument("--models", type=int, help="number of 3D models (STEP and STL)")
 mode.add_argument("--scan-from", type=Path, help="render this vector-PDF set as degraded scans (PNG)")
+mode.add_argument("--construction", type=int, help="number of construction base-plate drawings")
 parser.add_argument("--dpi", type=float, help="scan resolution (with --scan-from)")
 parser.add_argument("--max-skew-deg", type=float, help="largest random rotation (with --scan-from)")
 parser.add_argument("--revisions", type=int, default=None, help="revisions per family (with --families)")
@@ -54,7 +57,9 @@ if args.scan_from is not None:
 if args.seed is None or args.uri_prefix is None:
     parser.error("--seed and --uri-prefix are required for --count and --families")
 
-if args.models is not None:
+if args.construction is not None:
+    manifest = write_construction_set(args.out, args.construction, args.seed, args.uri_prefix)
+elif args.models is not None:
     manifest = write_model_set(args.out, args.models, args.seed, args.uri_prefix)
 elif args.families is not None:
     if args.revisions is None:

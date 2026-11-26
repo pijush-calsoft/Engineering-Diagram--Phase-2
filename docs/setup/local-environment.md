@@ -68,6 +68,29 @@ uv sync                           # or: pip install -r requirements-dev.txt (fro
 bash scripts/ci/run_ci.sh         # lint, types, tests, requirements sync, licence gate
 ```
 
+## 3a. CalculiX and Gmsh for block 6 (OD-58, OD-59)
+
+Both are GPL and run only as separate processes (plan §9). Neither is a workspace dependency, so the licence gate never sees them. Block 6 finds them in `tools/` or through settings:
+
+| Tool | Default location | Setting |
+|---|---|---|
+| CalculiX `ccx` (conda-forge `calculix`, 2.24 tested) | `tools/conda-fem/Library/bin/ccx.exe` | `EDP_CCX` |
+| Gmsh (PyPI wheel `gmsh`, 4.15 tested) in its own venv | `tools/gmsh-venv/Scripts/python.exe` | `EDP_GMSH_PYTHON` |
+
+Install without conda, using micromamba from conda-forge, on Windows. Keep the environment on a short path, because conda packages hit the 260-character path limit under long folders. Then link it into `tools/`:
+
+```bash
+# micromamba itself is a conda-forge package (check the sha256 on its anaconda.org page)
+curl -sSfL -o tools/micromamba/micromamba.tar.bz2 https://conda.anaconda.org/conda-forge/win-64/micromamba-2.10.0-0.tar.bz2
+tar -xjf tools/micromamba/micromamba.tar.bz2 -C tools/micromamba
+MAMBA_ROOT_PREFIX=$HOME/.edp-mamba tools/micromamba/Library/bin/micromamba.exe create -y -p $HOME/.edp-mamba/envs/fem --override-channels -c conda-forge calculix
+python -m venv $HOME/.edp-tools/gmsh-venv && $HOME/.edp-tools/gmsh-venv/Scripts/python -m pip install gmsh
+cmd //c "mklink /J tools\conda-fem %USERPROFILE%\.edp-mamba\envs\fem"
+cmd //c "mklink /J tools\gmsh-venv %USERPROFILE%\.edp-tools\gmsh-venv"
+```
+
+Without them, block 6 fails with `SOLVER_UNAVAILABLE`, and the solver tests and the construction end-to-end test are skipped.
+
 ## 4. Git
 
 The repository was created on 2026-11-24 with branch `main` (OD-18). The commit identity is set for this repository only (`git config --local`). `.gitattributes` keeps `*.sh` files at LF line endings, because this machine has `core.autocrlf=true`. The CI provider and remote hosting are still open (OD-18).

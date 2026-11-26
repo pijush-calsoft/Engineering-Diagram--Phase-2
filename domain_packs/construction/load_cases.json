@@ -1,0 +1,19 @@
+{
+  "pack": "construction",
+  "schema_version": "0.1.0",
+  "status": "ILLUSTRATIVE. These loads exist so the pipeline can run end to end. They are not design values. Replace them with the project's load combinations from the structural engineer (OD-56).",
+  "load_cases": [
+    {
+      "id": "BP-UPLIFT-ILLUSTRATIVE",
+      "applies_to": ["base_plate"],
+      "description": "Column in tension (uplift) on a base plate held down by its anchor bolts",
+      "kind": "base_plate_uplift",
+      "column_section": "HEA 200",
+      "column_footprint_mm": [200, 190],
+      "footprint_source": "HEA 200 nominal b x h (EN 10365)",
+      "axial_tension_kN": 100.0,
+      "restraint": "anchor bolt bores fixed",
+      "illustrative": true
+    }
+  ]
+}

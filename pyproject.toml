@@ -15,6 +15,10 @@ dependencies = [
     "edp-b1-parser",
     "edp-b2-interpretation",
     "edp-b3-knowledge-graph",
+    "edp-b4-generation",
+    "edp-b5-opencad",
+    "edp-b6-solvers",
+    "edp-b8-report",
 ]
 
 [dependency-groups]
@@ -29,7 +33,7 @@ package = false
 override-dependencies = ["matplotlib; sys_platform == 'never'"]
 
 [tool.uv.workspace]
-members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "platform/gateway", "orchestrator", "blocks/b1_parser", "blocks/b2_interpretation", "blocks/b3_knowledge_graph"]
+members = ["contracts", "eval", "scripts/ci", "platform/kit", "platform/fabric", "platform/catalogue", "platform/gateway", "orchestrator", "blocks/b1_parser", "blocks/b2_interpretation", "blocks/b3_knowledge_graph", "blocks/b4_generation", "blocks/b5_opencad", "blocks/b6_solvers", "blocks/b8_report"]
 
 [tool.uv.sources]
 edp-contracts = { workspace = true }
@@ -43,9 +47,13 @@ edp-orchestrator = { workspace = true }
 edp-b1-parser = { workspace = true }
 edp-b2-interpretation = { workspace = true }
 edp-b3-knowledge-graph = { workspace = true }
+edp-b4-generation = { workspace = true }
+edp-b5-opencad = { workspace = true }
+edp-b6-solvers = { workspace = true }
+edp-b8-report = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "platform/gateway/tests", "orchestrator/tests", "blocks/b1_parser/tests", "blocks/b2_interpretation/tests", "blocks/b3_knowledge_graph/tests"]
+testpaths = ["contracts/tests", "eval/tests", "scripts/ci/tests", "platform/kit/tests", "platform/fabric/tests", "platform/catalogue/tests", "platform/gateway/tests", "orchestrator/tests", "blocks/b1_parser/tests", "blocks/b2_interpretation/tests", "blocks/b3_knowledge_graph/tests", "blocks/b4_generation/tests", "blocks/b5_opencad/tests", "blocks/b6_solvers/tests", "blocks/b8_report/tests"]
 addopts = "-q"
 
 [tool.ruff]
@@ -56,7 +64,7 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_gateway", "edp_orchestrator", "edp_b1_parser", "edp_b2_interpretation", "edp_b3_knowledge_graph"]
+known-first-party = ["edp_contracts", "edp_eval", "edp_ci", "edp_kit", "edp_fabric", "edp_catalogue", "edp_gateway", "edp_orchestrator", "edp_b1_parser", "edp_b2_interpretation", "edp_b3_knowledge_graph", "edp_b4_generation", "edp_b5_opencad", "edp_b6_solvers", "edp_b8_report"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -65,5 +73,5 @@ plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 # Third-party packages without type information (no stubs, no py.typed).
-module = ["OCP.*", "pypdfium2", "pypdfium2.*", "trimesh", "trimesh.*"]
+module = ["OCP.*", "pypdfium2", "pypdfium2.*", "trimesh", "trimesh.*", "gmsh", "cadquery", "cadquery.*", "docx", "docx.*"]
 ignore_missing_imports = true

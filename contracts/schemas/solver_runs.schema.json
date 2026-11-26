@@ -1,0 +1,339 @@
+{
+  "$defs": {
+    "MaterialUsed": {
+      "properties": {
+        "E_MPa": {
+          "title": "E Mpa",
+          "type": "number"
+        },
+        "fy_MPa": {
+          "title": "Fy Mpa",
+          "type": "number"
+        },
+        "gamma_M0": {
+          "title": "Gamma M0",
+          "type": "number"
+        },
+        "grade": {
+          "title": "Grade",
+          "type": "string"
+        },
+        "nu": {
+          "title": "Nu",
+          "type": "number"
+        },
+        "row": {
+          "$ref": "#/$defs/SourceLocator"
+        }
+      },
+      "required": [
+        "grade",
+        "fy_MPa",
+        "gamma_M0",
+        "E_MPa",
+        "nu",
+        "row"
+      ],
+      "title": "MaterialUsed",
+      "type": "object"
+    },
+    "MeshInfo": {
+      "properties": {
+        "element_type": {
+          "title": "Element Type",
+          "type": "string"
+        },
+        "elements": {
+          "title": "Elements",
+          "type": "integer"
+        },
+        "mean_scaled_jacobian": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Scaled Jacobian"
+        },
+        "min_scaled_jacobian": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Scaled Jacobian"
+        },
+        "nodes": {
+          "title": "Nodes",
+          "type": "integer"
+        },
+        "size_max_mm": {
+          "title": "Size Max Mm",
+          "type": "number"
+        },
+        "size_min_mm": {
+          "title": "Size Min Mm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "elements",
+        "nodes",
+        "element_type",
+        "size_max_mm",
+        "size_min_mm"
+      ],
+      "title": "MeshInfo",
+      "type": "object"
+    },
+    "SolverRun": {
+      "properties": {
+        "allowable_MPa": {
+          "title": "Allowable Mpa",
+          "type": "number"
+        },
+        "assumptions": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        },
+        "fixed_nodes": {
+          "title": "Fixed Nodes",
+          "type": "integer"
+        },
+        "illustrative_load": {
+          "default": false,
+          "title": "Illustrative Load",
+          "type": "boolean"
+        },
+        "load_case_id": {
+          "title": "Load Case Id",
+          "type": "string"
+        },
+        "load_case_row": {
+          "$ref": "#/$defs/SourceLocator"
+        },
+        "loaded_nodes": {
+          "title": "Loaded Nodes",
+          "type": "integer"
+        },
+        "material": {
+          "$ref": "#/$defs/MaterialUsed"
+        },
+        "max_displacement_mm": {
+          "title": "Max Displacement Mm",
+          "type": "number"
+        },
+        "max_point_mm": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Max Point Mm",
+          "type": "array"
+        },
+        "max_von_mises_MPa": {
+          "title": "Max Von Mises Mpa",
+          "type": "number"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "seconds": {
+          "title": "Seconds",
+          "type": "number"
+        },
+        "solver": {
+          "title": "Solver",
+          "type": "string"
+        },
+        "solver_run_id": {
+          "title": "Solver Run Id",
+          "type": "string"
+        },
+        "solver_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Solver Version"
+        },
+        "total_force_N": {
+          "title": "Total Force N",
+          "type": "number"
+        }
+      },
+      "required": [
+        "solver_run_id",
+        "solver",
+        "load_case_id",
+        "load_case_row",
+        "model_version",
+        "material",
+        "total_force_N",
+        "fixed_nodes",
+        "loaded_nodes",
+        "max_von_mises_MPa",
+        "max_point_mm",
+        "max_displacement_mm",
+        "allowable_MPa",
+        "seconds"
+      ],
+      "title": "SolverRun",
+      "type": "object"
+    },
+    "SourceLocator": {
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "file_id": {
+          "title": "File Id",
+          "type": "string"
+        },
+        "handle": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Handle"
+        },
+        "layer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layer"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "view": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "View"
+        }
+      },
+      "required": [
+        "file_id",
+        "version",
+        "confidence"
+      ],
+      "title": "SourceLocator",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "domain_pack": {
+      "title": "Domain Pack",
+      "type": "string"
+    },
+    "load_cases_sha256": {
+      "title": "Load Cases Sha256",
+      "type": "string"
+    },
+    "materials_sha256": {
+      "title": "Materials Sha256",
+      "type": "string"
+    },
+    "mesh": {
+      "$ref": "#/$defs/MeshInfo"
+    },
+    "runs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SolverRun"
+      },
+      "title": "Runs",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "domain_pack",
+    "materials_sha256",
+    "load_cases_sha256",
+    "mesh"
+  ],
+  "title": "SolverRuns",
+  "type": "object"
+}

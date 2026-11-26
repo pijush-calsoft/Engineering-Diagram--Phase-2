@@ -1,0 +1,38 @@
+{
+  "pack": "construction",
+  "schema_version": "0.1.0",
+  "source": "EN 10025-2 (minimum yield strength by nominal thickness) and EN 1993-1-1 section 3.2.6 (E, nu) and section 6.1 (recommended gamma_M0). Standard values, not project values.",
+  "gamma_M0": 1.0,
+  "materials": [
+    {
+      "grade": "S275JR",
+      "standard": "EN 10025-2",
+      "E_MPa": 210000,
+      "nu": 0.3,
+      "yield_by_thickness": [
+        {"max_thickness_mm": 16, "fy_MPa": 275},
+        {"max_thickness_mm": 40, "fy_MPa": 265}
+      ]
+    },
+    {
+      "grade": "S355JR",
+      "standard": "EN 10025-2",
+      "E_MPa": 210000,
+      "nu": 0.3,
+      "yield_by_thickness": [
+        {"max_thickness_mm": 16, "fy_MPa": 355},
+        {"max_thickness_mm": 40, "fy_MPa": 345}
+      ]
+    },
+    {
+      "grade": "S355J2",
+      "standard": "EN 10025-2",
+      "E_MPa": 210000,
+      "nu": 0.3,
+      "yield_by_thickness": [
+        {"max_thickness_mm": 16, "fy_MPa": 355},
+        {"max_thickness_mm": 40, "fy_MPa": 345}
+      ]
+    }
+  ]
+}

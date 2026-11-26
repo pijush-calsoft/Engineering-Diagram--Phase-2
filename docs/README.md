@@ -5,6 +5,9 @@
 | [progress/PROGRESS.md](progress/PROGRESS.md) | Phase tracker (0 to 8), Phase 0 checklist, session log | End of every work session |
 | [progress/phase-0.md](progress/phase-0.md) | What was built in Phase 0, how it was verified, what is pending | During Phase 0 |
 | [progress/phase-3.md](progress/phase-3.md) | Phase 3: Interpretation, dependency incident, results | During Phase 3 |
+| [progress/phase-4.md](progress/phase-4.md) | Phase 4: Generation and OpenCAD Adapters, construction slice | During Phase 4 |
+| [progress/phase-5.md](progress/phase-5.md) | Phase 5: Solver Connectors (CalculiX), benchmark, margins | During Phase 5 |
+| [progress/phase-6.md](progress/phase-6.md) | Phase 6: Insight report, fact check, sign-off | During Phase 6 |
 | [progress/phase-2.md](progress/phase-2.md) | Phase 2: Drawing Parser, evaluation results and caveats | During Phase 2 |
 | [progress/phase-1.md](progress/phase-1.md) | Phase 1: walking skeleton, local adapters, exit-criteria status | During Phase 1 |
 | [open-decisions.md](open-decisions.md) | Decisions waiting on an owner (OD-1 onward) | A question appears or is decided |

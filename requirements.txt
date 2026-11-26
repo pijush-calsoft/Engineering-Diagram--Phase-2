@@ -13,12 +13,24 @@
     # via
     #   edp
     #   edp-eval
+-e ./blocks/b4_generation
+    # via edp
+-e ./blocks/b5_opencad
+    # via edp
+-e ./blocks/b6_solvers
+    # via edp
+-e ./blocks/b8_report
+    # via edp
 -e ./contracts
     # via
     #   edp
     #   edp-b1-parser
     #   edp-b2-interpretation
     #   edp-b3-knowledge-graph
+    #   edp-b4-generation
+    #   edp-b5-opencad
+    #   edp-b6-solvers
+    #   edp-b8-report
     #   edp-catalogue
     #   edp-eval
     #   edp-fabric
@@ -39,6 +51,10 @@
     #   edp-b1-parser
     #   edp-b2-interpretation
     #   edp-b3-knowledge-graph
+    #   edp-b4-generation
+    #   edp-b5-opencad
+    #   edp-b6-solvers
+    #   edp-b8-report
     #   edp-orchestrator
 -e ./platform/gateway
     # via
@@ -53,6 +69,10 @@
     #   edp-b1-parser
     #   edp-b2-interpretation
     #   edp-b3-knowledge-graph
+    #   edp-b4-generation
+    #   edp-b5-opencad
+    #   edp-b6-solvers
+    #   edp-b8-report
     #   edp-catalogue
     #   edp-fabric
     #   edp-orchestrator
@@ -61,7 +81,9 @@
 aiohappyeyeballs==2.7.1
     # via aiohttp
 aiohttp==3.14.5
-    # via litellm
+    # via
+    #   litellm
+    #   wslink
 aiosignal==1.4.0
     # via aiohttp
 aiosqlite==0.22.1
@@ -90,10 +112,16 @@ botocore==1.44.11
     # via
     #   boto3
     #   s3transfer
-cadquery-ocp==8.0.1.1.0
-    # via edp-b1-parser
-cadquery-ocp-proxy==8.0.1.1.0
+cadquery==2.8.0
+    # via edp-b5-opencad
+cadquery-ocp==7.9.3.1.1
+    # via
+    #   cadquery
+    #   edp-b1-parser
+cadquery-ocp-proxy==7.9.3.1.1
     # via cadquery-ocp
+casadi==3.8.2
+    # via cadquery
 certifi==2026.11.20
     # via
     #   httpcore
@@ -120,6 +148,7 @@ distro==1.9.0
     # via langsmith
 ezdxf==1.4.5
     # via
+    #   cadquery
     #   edp-b1-parser
     #   edp-eval
 fastapi==0.165.0
@@ -233,27 +262,49 @@ langsmith==0.16.1
     # via langchain-core
 litellm==1.111.0
     # via edp-gateway
+llvmlite==0.50.0
+    # via numba
+lxml==6.1.3
+    # via python-docx
 markupsafe==3.0.4
     # via jinja2
 matplotlib==3.11.2 ; sys_platform == 'never'
     # via vtk
+more-itertools==11.2.1
+    # via trame-server
+msgpack==1.2.4
+    # via wslink
 multidict==7.2.1
     # via
     #   aiohttp
     #   yarl
+multimethod==1.12
+    # via cadquery
+nlopt==2.11.0
+    # via cadquery
+numba==0.68.1
+    # via cadquery
 numpy==2.4.6 ; python_full_version < '3.12'
     # via
+    #   casadi
     #   contourpy
     #   ezdxf
     #   matplotlib
+    #   nlopt
+    #   numba
     #   opencv-python-headless
+    #   scipy
     #   trimesh
 numpy==2.5.5 ; python_full_version >= '3.12'
     # via
+    #   casadi
     #   contourpy
     #   ezdxf
     #   matplotlib
+    #   nlopt
+    #   numba
     #   opencv-python-headless
+    #   scipy
     #   trimesh
 openai==3.59.0
     # via litellm
@@ -293,6 +344,10 @@ pydantic==2.14.4
     #   edp-b1-parser
     #   edp-b2-interpretation
     #   edp-b3-knowledge-graph
+    #   edp-b4-generation
+    #   edp-b5-opencad
+    #   edp-b6-solvers
+    #   edp-b8-report
     #   edp-contracts
     #   edp-eval
     #   edp-gateway
@@ -309,6 +364,7 @@ pydantic-settings==2.16.3
     # via litellm
 pyparsing==3.3.3
     # via
+    #   cadquery
     #   ezdxf
     #   matplotlib
 pypdfium2==5.15.2
@@ -319,6 +375,8 @@ python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   matplotlib
+python-docx==1.2.0
+    # via edp-b8-report
 python-dotenv==1.2.4
     # via
     #   litellm
@@ -330,6 +388,7 @@ pyyaml==6.0.4
     #   huggingface-hub
     #   langchain-core
     #   litellm
+    #   trame
 referencing==0.37.0
     # via
     #   jsonschema
@@ -347,8 +406,14 @@ rpds-py==2026.9.1
     # via
     #   jsonschema
     #   referencing
+runtype==0.5.3
+    # via cadquery
 s3transfer==0.19.3
     # via boto3
+scipy==1.17.1 ; python_full_version < '3.12'
+    # via cadquery
+scipy==1.18.1 ; python_full_version >= '3.12'
+    # via cadquery
 six==1.17.0
     # via python-dateutil
 sniffio==1.3.1
@@ -367,6 +432,27 @@ tokenizers==0.23.3
     # via litellm
 tqdm==4.70.1
     # via huggingface-hub
+trame==4.0.0
+    # via cadquery
+trame-client==4.1.4
+    # via
+    #   trame
+    #   trame-components
+    #   trame-vtk
+    #   trame-vuetify
+trame-common==1.3.0
+    # via
+    #   trame
+    #   trame-client
+    #   trame-server
+trame-components==2.5.0
+    # via cadquery
+trame-server==4.1.3
+    # via trame
+trame-vtk==2.11.17
+    # via cadquery
+trame-vuetify==3.3.0
+    # via cadquery
 trimesh==5.2.2
     # via edp-b1-parser
 truststore==0.10.5 ; sys_platform != 'emscripten'
@@ -394,6 +480,7 @@ typing-extensions==4.16.0
     #   pydantic
     #   pydantic-core
     #   pydantic-settings
+    #   python-docx
     #   referencing
     #   starlette
     #   typing-inspection
@@ -418,6 +505,10 @@ websockets==17.4
     # via
     #   langgraph-sdk
     #   langsmith
+wslink==2.6.0
+    # via
+    #   trame
+    #   trame-server
 xxhash==4.1.0
     # via
     #   langgraph

@@ -1,0 +1,21 @@
+[project]
+name = "edp-b6-solvers"
+version = "0.1.0"
+description = "Block 6: Solver Connectors, CalculiX through Gmsh meshes, margins per load case (plan Phase 5)"
+requires-python = ">=3.11"
+dependencies = ["edp-contracts", "edp-kit", "edp-fabric", "pydantic>=2.7,<3"]
+
+[project.entry-points."edp.blocks"]
+b6_solvers = "edp_b6_solvers:SolverConnectors"
+
+[tool.uv.sources]
+edp-contracts = { workspace = true }
+edp-kit = { workspace = true }
+edp-fabric = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/edp_b6_solvers"]

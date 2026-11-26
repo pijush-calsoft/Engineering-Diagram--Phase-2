@@ -60,6 +60,14 @@ uv run python -m edp_eval.synth --out eval/golden/data/synthetic --count 80 --se
 
 `--uri-prefix` is where the files will live once the Data Fabric exists (Phase 1); the bucket name is a placeholder until then. The same seed and count always give the same set.
 
+### Construction set (OD-55)
+
+Steel column base plates, drawn with the same writer as the `plate` family, ISO profile only (`edp_eval.synth.construction`). Anchor-bolt clearance holes M16 to M30 follow EN 1090-2 (bolt + 2 mm up to M24, + 3 mm from M27). Edge distance ≥ 1.2 d0 and spacing ≥ 2.2 d0 follow EN 1993-1-8; the sampler rejects draws that break them. Grades are S275JR, S355JR and S355J2. Sizes, thicknesses and insets are generator settings. Labels use family `base_plate` and ids `con-iso-base_plate-NNN`.
+
+```
+uv run python -m edp_eval.synth --out eval/golden/data/construction --construction 24 --seed 2026 --uri-prefix s3://edp-fabric/golden/construction
+```
+
 ## Using the code
 
 ```python

@@ -86,7 +86,14 @@ def test_report_detects_unresolved_claims():
 
 
 def test_every_schema_exports(tmp_path):
-    assert set(ARTIFACT_MODELS) == {"geometry", "design_graph", "cad_script", "margins", "report"}
+    assert set(ARTIFACT_MODELS) == {
+        "geometry",
+        "design_graph",
+        "cad_script",
+        "margins",
+        "solver_runs",
+        "report",
+    }
     paths = write_schemas(tmp_path)
     assert len(paths) == len(all_schemas())
     for p in paths:
