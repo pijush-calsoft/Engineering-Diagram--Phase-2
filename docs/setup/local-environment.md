@@ -91,6 +91,18 @@ cmd //c "mklink /J tools\gmsh-venv %USERPROFILE%\.edp-tools\gmsh-venv"
 
 Without them, block 6 fails with `SOLVER_UNAVAILABLE`, and the solver tests and the construction end-to-end test are skipped.
 
+## 3b. Node.js for the console
+
+The console (`console/`) needs Node.js to build and for the CI's npm licence gate and type check. Without it the CI skips both. A portable zip needs no administrator rights; check it against the release's `SHASUMS256.txt`:
+
+```bash
+V=v26.13.1   # an LTS release from https://nodejs.org/dist/index.json
+curl -sSfL -O https://nodejs.org/dist/$V/node-$V-win-x64.zip && curl -sSfL -O https://nodejs.org/dist/$V/SHASUMS256.txt
+grep node-$V-win-x64.zip SHASUMS256.txt && sha256sum node-$V-win-x64.zip
+unzip -q node-$V-win-x64.zip -d $HOME/.edp-tools && export PATH="$HOME/.edp-tools/node-$V-win-x64:$PATH"
+cd console && npm ci && npm run build
+```
+
 ## 4. Git
 
 The repository was created on 2026-11-24 with branch `main` (OD-18). The commit identity is set for this repository only (`git config --local`). `.gitattributes` keeps `*.sh` files at LF line endings, because this machine has `core.autocrlf=true`. The CI provider and remote hosting are still open (OD-18).

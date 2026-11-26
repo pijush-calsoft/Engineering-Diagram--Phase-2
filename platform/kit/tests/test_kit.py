@@ -69,3 +69,14 @@ def test_http_endpoints():
     assert client.post("/run", json=request("margins").model_dump(mode="json")).status_code == 422
     failing = TestClient(create_block_app(Echo(fail=True)))
     assert failing.post("/run", json=request().model_dump(mode="json")).status_code == 500
+
+
+def test_overrides_accept_only_known_positive_sizes():
+    from edp_kit import OverrideError, overrides, parse_overrides
+
+    assert parse_overrides(None) == {} and parse_overrides({"thickness": 25}) == {"thickness": 25.0}
+    req = BlockRequest(run_id="r", inputs=[], params={"overrides": {"thickness": 12.5}})
+    assert overrides(req) == {"thickness": 12.5}
+    for bad in ({"length": 300}, {"thickness": 0}, {"thickness": "25"}, {"thickness": True}, [25]):
+        with pytest.raises(OverrideError):
+            parse_overrides(bad)

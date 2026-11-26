@@ -57,9 +57,17 @@ def compose(run_id: str, store: RunStore) -> tuple[Report, list[str], dict[str, 
     revision = (title.get("revision") or {}).get("value") or "-"
     b.ident(part, revision)
 
+    # Values a person changed for this run (edp_kit.overrides) are cited from the run's parameters;
+    # the drawing's value is cited beside them, so the report never presents a change as read.
+    changed = sorted((store.documents.get("run_params") or {}).get("overrides") or {})
     for role in ("length", "width", "thickness"):
         i = next(i for i, n in enumerate(nodes) if n["attributes"].get("role") == role)
-        b.add(f"plate.{role}", f"design_graph:/nodes/{i}/attributes/value_mm", "mm")
+        drawing_ref = f"design_graph:/nodes/{i}/attributes/value_mm"
+        if role in changed:
+            b.add(f"plate.{role}", f"run_params:/overrides/{role}", "mm")
+            b.add(f"drawing.{role}", drawing_ref, "mm")
+        else:
+            b.add(f"plate.{role}", drawing_ref, "mm")
     holes = sorted(n["id"] for n in nodes if n["kind"] == "feature" and n.get("feature_type") == "hole")
     b.ident(*holes)
     if holes:
@@ -131,9 +139,20 @@ def compose(run_id: str, store: RunStore) -> tuple[Report, list[str], dict[str, 
         if holes
         else " No holes were read."
     )
+    source_text = ""
+    if changed:
+        read = [r for r in ("length", "width", "thickness") if r not in changed]
+        parts = [f"{_and(read)} read from the drawing's dimensions"] if read else []
+        parts += [
+            f"{r} set to {{plate.{r}}} mm for this run, where the drawing says {{drawing.{r}}} mm"
+            for r in changed
+        ]
+        sentence = "; ".join(parts)
+        source_text = f" {sentence[0].upper()}{sentence[1:]}."
     b.section(
         "inputs",
-        "Plate {plate.length} x {plate.width} x {plate.thickness} mm, read from the drawing's dimensions."
+        "Plate {plate.length} x {plate.width} x {plate.thickness} mm"
+        + ("." + source_text if changed else ", read from the drawing's dimensions.")
         + hole_text
         + f" Material {mat['grade']} from domain pack {runs['domain_pack']}: f_y {{mat.fy}} MPa for this "
         f"thickness ({mat['row']['handle']}), gamma_M0 {{mat.gamma}}, E {{mat.E}} MPa. "
@@ -146,7 +165,9 @@ def compose(run_id: str, store: RunStore) -> tuple[Report, list[str], dict[str, 
     b.section(
         "model",
         "Editable CadQuery script generated from the design graph by template; every script parameter traces "
-        "to a drawing dimension. Meshed with Gmsh into {mesh.elements} second-order tetrahedra (C3D10), "
+        "to a drawing dimension"
+        + (f", and the script marks the changed {_and(changed)} as overridden" if changed else "")
+        + ". Meshed with Gmsh into {mesh.elements} second-order tetrahedra (C3D10), "
         "element size {mesh.size_max} mm down to {mesh.size_min} mm, "
         "minimum scaled Jacobian {mesh.jacobian}. "
         "Solved with CalculiX, linear static.",
@@ -154,6 +175,11 @@ def compose(run_id: str, store: RunStore) -> tuple[Report, list[str], dict[str, 
     b.section("margins", " ".join(margin_lines))
     b.section("envelope", "Not computed: the surrogate and failure-envelope block is not built yet.")
     flag_text = []
+    if changed:
+        flag_text.append(
+            f"The {_and(changed)} differs from the drawing: the drawing must be revised before "
+            "this design is issued."
+        )
     if illustrative:
         flag_text.append("The load case is illustrative and must be replaced with project loads (OD-56).")
     if any(b.claims[f"lc{k}.margin"].value < 1 for k in range(len(runs["runs"]))):
@@ -168,8 +194,19 @@ def compose(run_id: str, store: RunStore) -> tuple[Report, list[str], dict[str, 
         + " The report text comes from a fixed template; no language model wrote it.",
     )
     report = Report(run_id=run_id, format="docx", sections=b.sections, claims=list(b.claims.values()))
-    summary = {"part": part, "revision": revision, "grade": mat["grade"], "governing": governing}
+    summary = {
+        "part": part,
+        "revision": revision,
+        "grade": mat["grade"],
+        "governing": governing,
+        "overrides": {r: b.claims[f"plate.{r}"].value for r in changed},
+    }
     return report, b.identifiers, summary
+
+
+def _and(words: list[str]) -> str:
+    """'a', 'a and b', 'a, b and c'."""
+    return words[0] if len(words) == 1 else f"{', '.join(words[:-1])} and {words[-1]}"
 
 
 def _nearest_hole(nodes: list[dict[str, Any]], holes: list[str], point: list[float]) -> str | None:

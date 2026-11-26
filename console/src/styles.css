@@ -118,6 +118,12 @@ input {
   flex: 1 1 auto;
 }
 
+/* Only the workspace gives up height: a tall side panel scrolls instead of squeezing the
+   masthead, the pipeline strip or the events drawer. */
+.app > :not(.workspace) {
+  flex-shrink: 0;
+}
+
 .masthead {
   display: flex;
   flex-wrap: wrap;
@@ -1158,4 +1164,182 @@ summary {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* Middle column: drawing or generated model */
+.middle {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.middle > :only-child {
+  grid-row: 1 / -1;
+}
+
+.surface-switch {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--sheet);
+}
+
+/* Design check: model, margin, report (blocks 4 to 8) */
+.results {
+  padding: 1rem;
+}
+
+.results section + section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.results h2 {
+  margin-top: 0;
+}
+
+.results h3 {
+  font-size: var(--step-0);
+  margin: 0.75rem 0 0.2rem;
+}
+
+.results .facts .fact-row {
+  display: contents;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-size: var(--step--1);
+  color: var(--graphite);
+}
+
+.badge-changed {
+  border-color: var(--redline);
+  color: var(--redline);
+  background: var(--redline-wash);
+}
+
+.override-note {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.65rem;
+  border-left: 3px solid var(--redline);
+  background: var(--redline-wash);
+}
+
+.rerun {
+  margin-top: 0.85rem;
+}
+
+.rerun label {
+  display: block;
+  font-size: var(--step--1);
+  color: var(--graphite);
+}
+
+.rerun-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.rerun-row input {
+  width: 6rem;
+}
+
+.small {
+  font-size: var(--step--1);
+  margin: 0.4rem 0 0;
+}
+
+.margin-card {
+  border: 1px solid var(--rule);
+  border-left-width: 4px;
+  padding: 0.75rem;
+  background: var(--sheet);
+}
+
+.margin-card + .margin-card {
+  margin-top: 0.75rem;
+}
+
+.margin-card.is-low {
+  border-left-color: var(--redline);
+}
+
+.margin-card.is-ok {
+  border-left-color: var(--trace);
+}
+
+.margin-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.margin-value {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.is-low .margin-value {
+  color: var(--redline);
+}
+
+.is-ok .margin-value {
+  color: var(--trace);
+}
+
+.margin-label {
+  color: var(--graphite);
+}
+
+.compare {
+  margin: 0.6rem 0 0;
+  font-size: var(--step--1);
+}
+
+.fact-check {
+  color: var(--trace);
+  font-weight: 600;
+}
+
+.report-section p {
+  margin: 0;
+}
+
+.button-link {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.button-link:hover {
+  background: var(--trace-wash);
+}
+
+.signed {
+  color: var(--trace);
+  font-weight: 600;
+}
+
+.results > .review {
+  margin-bottom: 1rem;
+}
+
+.stop-reasons {
+  margin: 0 0 0.6rem;
+  padding-left: 1.1rem;
 }

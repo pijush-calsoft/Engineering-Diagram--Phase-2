@@ -11,10 +11,20 @@ import type { Mesh, Solid } from "../types";
 const INK = 0x1f2b33;
 const BODY = 0xdfe5e6;
 const TRACE = 0x147a93;
+const PEAK = 0xc62b35; // redline
 
-type Props = { runId: string; solids: Solid[]; traced: Set<string>; units: string | null };
+type Props = {
+  runId: string;
+  solids: Solid[];
+  traced: Set<string>;
+  units: string | null;
+  // "input": the uploaded STEP/IGES/STL; "model": the model block 5 generated from the drawing.
+  source?: "input" | "model";
+  // Peak stress point from block 6, in model millimetres, marked in red.
+  peak?: [number, number, number] | null;
+};
 
-export function Viewer3D({ runId, solids, traced, units }: Props) {
+export function Viewer3D({ runId, solids, traced, units, source = "input", peak = null }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const [mesh, setMesh] = useState<Mesh | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +35,8 @@ export function Viewer3D({ runId, solids, traced, units }: Props) {
   useEffect(() => {
     setMesh(null);
     setError(null);
-    api.mesh(runId).then(setMesh).catch((e) => setError((e as Error).message));
-  }, [runId]);
+    (source === "model" ? api.model(runId) : api.mesh(runId)).then(setMesh).catch((e) => setError((e as Error).message));
+  }, [runId, source]);
 
   useEffect(() => {
     const el = host.current;
@@ -92,6 +102,15 @@ export function Viewer3D({ runId, solids, traced, units }: Props) {
     }
     rings.visible = holes;
     scene.add(rings);
+    if (peak) {
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(size * 0.012, 24, 16),
+        new THREE.MeshBasicMaterial({ color: PEAK, depthTest: false }),
+      );
+      marker.position.set(...peak);
+      marker.renderOrder = 2;
+      scene.add(marker);
+    }
 
     fit.current = () => {
       const dist = size * 2.2;
@@ -130,7 +149,7 @@ export function Viewer3D({ runId, solids, traced, units }: Props) {
       renderer.dispose();
       el.removeChild(renderer.domElement);
     };
-  }, [mesh, solids, traced, edges, holes]);
+  }, [mesh, solids, traced, edges, holes, peak]);
 
   const nHoles = solids.reduce((n, s) => n + s.holes.length, 0);
   return (
@@ -150,13 +169,18 @@ export function Viewer3D({ runId, solids, traced, units }: Props) {
           </button>
         </div>
       </div>
-      <div className="ws-canvas viewer3d" ref={host} aria-label="3D model as read by the parser. Drag to orbit, scroll to zoom, right-drag to pan.">
+      <div
+        className="ws-canvas viewer3d"
+        ref={host}
+        aria-label={`${source === "model" ? "3D model generated from the drawing" : "3D model as read by the parser"}. Drag to orbit, scroll to zoom, right-drag to pan.`}
+      >
         {!mesh && !error && <p className="ws-readout">Loading the model…</p>}
         {error && <p className="ws-readout error-text">The model could not be drawn: {error}</p>}
         {mesh && (
           <p className="ws-readout">
-            {mesh.indices.length / 3} triangles, {mesh.faces.length || "no"} named faces{units ? `, ${units}` : ""}. Drag to orbit, scroll to
-            zoom, right-drag to pan.
+            {source === "model" ? "Generated model. " : ""}
+            {mesh.indices.length / 3} triangles, {mesh.faces.length || "no"} named faces{units ? `, ${units}` : ""}.
+            {peak ? " Red dot: peak stress." : ""} Drag to orbit, scroll to zoom, right-drag to pan.
           </p>
         )}
       </div>

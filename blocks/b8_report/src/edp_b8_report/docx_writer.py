@@ -36,6 +36,10 @@ def to_docx(report: Report, meta: dict[str, Any]) -> bytes:
         ("Materials file", meta["materials_sha256"][:16]),
         ("Load cases file", meta["load_cases_sha256"][:16]),
         ("Report schema", report.schema_version),
+        (
+            "Changed from the drawing",
+            ", ".join(f"{k} {v:g} mm" for k, v in sorted((meta.get("overrides") or {}).items())) or "nothing",
+        ),
     ):
         row = table.add_row().cells
         row[0].text, row[1].text = label, value

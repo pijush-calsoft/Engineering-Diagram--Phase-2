@@ -96,12 +96,17 @@ def interpret(geometry: Geometry) -> tuple[DesignGraph, list[Flag], dict[str, An
         )
     if not any(n.kind in ("feature", "parameter") for n in nodes):
         # OD-62: nothing to model. Say so rather than hand an empty graph on as a result.
+        # 3D models are not interpreted yet (rules read 2D drawings), so for them an empty
+        # graph is expected: noted, not stopped. Block 1 flags a 3D file with no solid.
         flags.append(
             Flag(
                 code="EMPTY_INTERPRETATION",
-                severity="review",
-                message=f"no feature or dimension recognised from {len(geometry.entities)} entities "
-                f"and {len(geometry.solids)} solids",
+                severity="info" if geometry.solids else "review",
+                message=(
+                    f"3D model with {len(geometry.solids)} solid(s): block 2 interprets 2D drawings only"
+                    if geometry.solids
+                    else f"no feature or dimension recognised from {len(geometry.entities)} entities"
+                ),
             )
         )
     metrics = {

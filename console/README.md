@@ -30,11 +30,13 @@ For UI development, run `npm run dev` in `console/` (Vite proxies `/api` to port
 | Title block | Part number, revision, material, scale, units, tolerances read from the drawing, plus run, file version and status; a switchable overlay | |
 | Inspector | Features and parameters from the design graph, with how each value was found and its sheet zone; holes of 3D models; similar parts and corroboration; flags; approve or reject when a run waits for review | plan Phase 3, principle 3, Phase 1 "interrupt points for human review" |
 | Ask about it (chat) | Tab beside "Read from the drawing". Questions about the open run are answered from numbered facts the platform read (title block, dimensions, notes, features, 3D solids, similar parts, flags); every answer lists the facts it used, and clicking one highlights its source on the drawing. Answers the facts do not support say so. Each answer shows tokens and cost; the panel shows total model spend. Built on assistant-ui (`useLocalRuntime` with an adapter that calls `POST /api/runs/{id}/chat`) | plan Phase 1 "Chat panel", §4.3 assistant-ui; Catalogue "cited answer" endpoint |
+| Design check | Tab beside "Read from the drawing", for runs with a domain pack (construction samples `con-*`). The editable model's outline (each value marked "from drawing" or "changed"); the margin with peak stress, allowable, displacement, load case and mesh; the report's fact-check count, summary, all sections and a DOCX download (`GET /api/runs/{id}/report.docx`); one review box for any stop, which reads "Sign off" at the report. **Try another thickness** starts a new run of the same drawing with that thickness (`POST /api/runs/{id}/rerun`, `edp_kit.overrides`); the new run shows the earlier margin beside its own | deck slide 85 (Demo 4), plan Phase 6 console "margins" and "report studio" (first cut) |
+| Generated model | A switch above the workspace: "Drawing" or "Generated model", the STEP block 5 built (`GET /api/runs/{id}/model`), with the peak-stress point from block 6 as a red dot | plan Phase 6 console "3D viewer" |
 | Run events | A drawer at the bottom with the run's event log | plan Appendix B |
 
 Links: `?run=<id>` opens a run; `&select=<id>` (for example `hole1.diameter`) opens it with that value traced.
 
-Not built yet: run planning from chat (plan Phase 6 "Chat with run plans"), script editor, margins and envelope views, report studio (Phases 4 to 6), 
+Not built yet: run planning from chat (plan Phase 6 "Chat with run plans"), script editor, stress contour plot, envelope view, report versions and PDF (Phases 4 to 6). The design check covers margins and a first report view only.
 
 ## Design
 

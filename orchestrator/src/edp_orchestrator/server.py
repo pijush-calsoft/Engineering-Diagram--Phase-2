@@ -33,7 +33,7 @@ from edp_contracts import Block
 from edp_contracts.registry import discover_blocks
 from edp_fabric import FabricStore, IngestResult, UnsupportedTypeError
 from edp_gateway import DataClass, Gateway, GatewayConfig, GatewayError
-from edp_kit import InMemoryEventBus
+from edp_kit import InMemoryEventBus, OverrideError, parse_overrides
 from edp_orchestrator.graph import Orchestrator, RunStatus
 from edp_orchestrator.stubs import stub_blocks
 
@@ -84,6 +84,8 @@ class RunSummary(BaseModel):
     state: str
     running: bool
     started: float
+    parent: str | None = None
+    overrides: dict[str, float] = {}
 
 
 class RunView(BaseModel):
@@ -91,6 +93,13 @@ class RunView(BaseModel):
     running: bool
     upload: IngestResult | None
     artifacts: list[dict]
+    domain_pack: str | None = None
+    parent: str | None = None
+    overrides: dict[str, float] = {}
+
+
+class Rerun(BaseModel):
+    overrides: dict[str, float]
 
 
 class Console:
@@ -114,6 +123,8 @@ class Console:
         self.uploads: dict[str, IngestResult] = {}
         self.data_class: dict[str, DataClass] = {}
         self.started: dict[str, float] = {}
+        self.params: dict[str, dict] = {}
+        self.parent: dict[str, str] = {}
         self.meshes: dict[str, Mesh] = {}
         self._gateway = gateway
 
@@ -166,6 +177,8 @@ class Console:
                     state=self.orchestrator.status(run_id).state,
                     running=run_id in self.running,
                     started=self.started.get(run_id, 0.0),
+                    parent=self.parent.get(run_id),
+                    overrides=self.params.get(run_id, {}).get("overrides", {}),
                 )
             )
         return sorted(out, key=lambda r: r.started, reverse=True)
@@ -177,19 +190,53 @@ class Console:
             self.meshes[run_id] = mesh_of(self.fabric.read(up.uri), up.kind)
         return self.meshes[run_id]
 
+    def block_output(self, run_id: str, block: str, kind: str) -> bytes | None:
+        """The bytes of a block's stored output, or None when the block has not written one."""
+        for r in self.catalogue.by_run(run_id):
+            if r.block == block and r.artifact.kind == kind and r.artifact.uri.startswith("fabric://"):
+                return self.fabric.read(r.artifact.uri)
+        return None
+
+    def model_mesh(self, run_id: str) -> Mesh:
+        """Triangles of the model block 5 generated, for the viewer (cached per run)."""
+        key = f"{run_id}#model"
+        if key not in self.meshes:
+            step = self.block_output(run_id, "b5_opencad", "step")
+            if step is None:
+                raise LookupError(f"run {run_id} has no generated model yet")
+            self.meshes[key] = mesh_of(step, "step")
+        return self.meshes[key]
+
     def start(
         self, filename: str, data: bytes, data_class: DataClass = "client", domain_pack: str | None = None
     ) -> StartedRun:
         upload = self.fabric.ingest(filename, data, uploader="console")
-        run_id = f"run-{uuid.uuid4().hex[:8]}"
-        self.uploads[run_id] = upload
-        self.data_class[run_id] = data_class
-        self.started[run_id] = time.time()
-        self.running.add(run_id)
         # Blocks 4 to 8 run only for a run that names its domain pack (edp_kit.passthrough).
-        params: dict[str, str] = {"data_class": data_class}
+        params: dict = {"data_class": data_class}
         if domain_pack:
             params["domain_pack"] = domain_pack
+        return self._launch(upload, params)
+
+    def rerun(self, run_id: str, changes: dict[str, float]) -> StartedRun:
+        """The same drawing again with a person's changes (edp_kit.overrides); a new run, so the
+        first one and its report stay as they were."""
+        if run_id not in self.uploads:
+            raise KeyError(run_id)
+        params = dict(self.params[run_id])
+        if not params.get("domain_pack"):
+            raise OverrideError("changes need a run with a domain pack (blocks 4 to 8)")
+        params["overrides"] = parse_overrides(changes)
+        new = self._launch(self.uploads[run_id], params)
+        self.parent[new.run_id] = run_id
+        return new
+
+    def _launch(self, upload: IngestResult, params: dict) -> StartedRun:
+        run_id = f"run-{uuid.uuid4().hex[:8]}"
+        self.uploads[run_id] = upload
+        self.data_class[run_id] = params["data_class"]
+        self.params[run_id] = params
+        self.started[run_id] = time.time()
+        self.running.add(run_id)
         threading.Thread(
             target=self._work,
             args=(run_id, lambda: self.orchestrator.start(run_id, [upload.as_artifact()], params)),
@@ -223,11 +270,15 @@ class Console:
             {"id": r.id, "block": r.block, "kind": r.artifact.kind, "uri": r.artifact.uri}
             for r in self.catalogue.by_run(run_id)
         ]
+        params = self.params.get(run_id, {})
         return RunView(
             status=status,
             running=running,
             upload=self.uploads.get(run_id),
             artifacts=artifacts,
+            domain_pack=params.get("domain_pack"),
+            parent=self.parent.get(run_id),
+            overrides=params.get("overrides", {}),
         )
 
     def events(self, run_id: str) -> Iterator[str]:
@@ -331,6 +382,38 @@ def create_app(console: Console) -> FastAPI:
         try:
             return console.mesh(run_id)
         except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/api/runs/{run_id}/model", response_model=Mesh)
+    def model(run_id: str) -> Mesh:
+        """The model block 5 generated from the drawing."""
+        if run_id not in console.uploads:
+            raise HTTPException(status_code=404, detail=f"unknown run {run_id}")
+        try:
+            return console.model_mesh(run_id)
+        except LookupError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/api/runs/{run_id}/report.docx")
+    def report_docx(run_id: str) -> Response:
+        data = console.block_output(run_id, "b8_report", "docx") if run_id in console.uploads else None
+        if data is None:
+            raise HTTPException(status_code=404, detail=f"run {run_id} has no report document")
+        return Response(
+            content=data,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{run_id}-report.docx"'},
+        )
+
+    @app.post("/api/runs/{run_id}/rerun", response_model=StartedRun)
+    def rerun(run_id: str, body: Rerun) -> StartedRun:
+        try:
+            return console.rerun(run_id, body.overrides)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=f"unknown run {run_id}") from exc
+        except OverrideError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @app.get("/api/chat", response_model=ChatStatus)

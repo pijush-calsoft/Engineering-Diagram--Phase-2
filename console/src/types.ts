@@ -79,6 +79,53 @@ export type RunView = {
   running: boolean;
   upload: { file_id: string; dataset_id: string; commit: string; kind: string; filename: string } | null;
   artifacts: { id: string; block: string; kind: string; uri: string }[];
+  domain_pack: string | null;
+  parent: string | null;
+  overrides: Record<string, number>;
+};
+
+// Blocks 4 to 8 (cad_script, margins, solver_runs, report in edp_contracts.artifacts).
+export type ScriptParameter = { name: string; value: number | string; unit: string | null; comment: string | null; source: Locator };
+
+export type CadScript = { language: string; code: string; parameters: ScriptParameter[] };
+
+export type Margin = {
+  load_case_id: string;
+  allowable: number;
+  computed: number;
+  margin: number;
+  solver_run_id: string;
+  governing_location: Locator;
+};
+
+export type Margins = { margins: Margin[] };
+
+export type SolverRun = {
+  solver_run_id: string;
+  solver: string;
+  load_case_id: string;
+  illustrative_load: boolean;
+  material: { grade: string; fy_MPa: number; gamma_M0: number; E_MPa: number };
+  total_force_N: number;
+  max_von_mises_MPa: number;
+  max_point_mm: [number, number, number];
+  max_displacement_mm: number;
+  allowable_MPa: number;
+  seconds: number;
+};
+
+export type SolverRuns = {
+  domain_pack: string;
+  mesh: { elements: number; nodes: number; size_max_mm: number; size_min_mm: number; min_scaled_jacobian: number | null };
+  runs: SolverRun[];
+};
+
+export type ReportSection = { key: string; text: string; claim_ids: string[] };
+
+export type Report = {
+  run_id: string;
+  sections: ReportSection[];
+  claims: { id: string; value: number; unit: string | null; run_store_ref: string }[];
 };
 
 export type BlockInfo = { name: string; version: string; real: boolean };
@@ -134,6 +181,8 @@ export type RunSummary = {
   state: string;
   running: boolean;
   started: number;
+  parent: string | null;
+  overrides: Record<string, number>;
 };
 
 export type Mesh = {

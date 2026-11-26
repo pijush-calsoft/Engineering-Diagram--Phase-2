@@ -22,7 +22,7 @@ from edp_b8_report.docx_writer import to_docx
 from edp_b8_report.factcheck import RunStore, check
 from edp_contracts import Artifact, BlockRequest, BlockResult, Flag
 from edp_contracts.artifacts.report import SCHEMA_VERSION
-from edp_kit import ArtifactStore, pass_through, skip_reason
+from edp_kit import ArtifactStore, OverrideError, overrides, pass_through, skip_reason
 
 REPO_PACKS = Path(__file__).resolve().parents[4] / "domain_packs"
 
@@ -70,6 +70,10 @@ class InsightReport:
             docs["title_block"] = (
                 json.loads(self.store.read(by_kind["geometry"].uri)).get("title_block") or {}
             )
+        try:
+            docs["run_params"] = {"overrides": overrides(req)}  # cited by the report (edp_kit.overrides)
+        except OverrideError as exc:
+            return self._blocked(req, "BAD_OVERRIDE", str(exc))
         runs = docs["solver_runs"]
         for name, recorded in (
             ("load_cases", runs["load_cases_sha256"]),

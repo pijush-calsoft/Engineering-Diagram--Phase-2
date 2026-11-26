@@ -73,3 +73,63 @@ def test_base_plate_runs_from_drawing_to_signed_report(tmp_path, monkeypatch):
     text = "\n".join(p.text for p in Document(io.BytesIO(fabric.read(records["docx"].uri))).paragraphs)
     assert "EDP-BP-TEST" in text and "DRAFT: not signed off" in text
     assert records["report"].sources[0].file_id == up.file_id  # the report traces back to the drawing
+
+
+def wait_for(client, run_id: str, seconds: float = 900.0) -> dict:
+    import time
+
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        view = client.get(f"/api/runs/{run_id}").json()
+        if not view["running"]:
+            return view
+        time.sleep(0.5)
+    raise AssertionError(f"run {run_id} did not finish")
+
+
+def test_console_shows_model_and_report_and_reruns_with_a_changed_thickness(tmp_path):
+    # Demo 4 in the console (deck slide 85): model, margin and report on screen, then a person
+    # changes the thickness and the model, simulation and report follow in a new run.
+    from fastapi.testclient import TestClient
+
+    from edp_orchestrator.server import Console, create_app
+
+    console = Console(tmp_path / "data")
+    c = TestClient(create_app(console))
+    upload = {"file": ("bp.dxf", small_base_plate_dxf())}
+    first = c.post("/api/runs", params={"domain_pack": "construction"}, files=upload).json()["run_id"]
+    view = wait_for(c, first)
+    assert view["status"]["state"] == "awaiting_review" and view["domain_pack"] == "construction"
+    model = c.get(f"/api/runs/{first}/model").json()
+    assert model["indices"] and model["bbox"][5] - model["bbox"][2] == pytest.approx(25.0, abs=0.01)
+    docx = c.get(f"/api/runs/{first}/report.docx")
+    assert docx.status_code == 200 and docx.content[:2] == b"PK"
+
+    assert c.post(f"/api/runs/{first}/rerun", json={"overrides": {"length": 300}}).status_code == 422
+    assert c.post("/api/runs/run-none/rerun", json={"overrides": {"thickness": 12}}).status_code == 404
+    second = c.post(f"/api/runs/{first}/rerun", json={"overrides": {"thickness": 12}}).json()["run_id"]
+    view = wait_for(c, second)
+    assert view["parent"] == first and view["overrides"] == {"thickness": 12.0}
+    # A 12 mm plate does not carry the illustrative load: block 6 stops for a person first.
+    b6 = view["status"]["results"][-1]
+    assert b6["block"] == "b6_solvers" and "MARGIN_BELOW_ONE" in {f["code"] for f in b6["flags"]}
+    c.post(f"/api/runs/{second}/review", json={"decision": "approve", "reviewer": "design lead"})
+    view = wait_for(c, second)
+    assert view["status"]["results"][-1]["block"] == "b8_report"
+    assert view["status"]["state"] == "awaiting_review"  # report written, fact check passed
+    model = c.get(f"/api/runs/{second}/model").json()
+    assert model["bbox"][5] - model["bbox"][2] == pytest.approx(12.0, abs=0.01)
+    kinds = {a["kind"]: a["uri"] for a in view["artifacts"] if a["uri"].startswith("fabric://")}
+    margins = c.get("/api/artifact", params={"uri": kinds["margins"]}).json()["margins"]
+    assert margins[0]["allowable"] == 355.0  # S355J2, t <= 16 mm: the yield band follows the change
+    report = Report.model_validate(c.get("/api/artifact", params={"uri": kinds["report"]}).json())
+    inputs = next(s.text for s in report.sections if s.key == "inputs")
+    assert (
+        "Length and width read from the drawing's dimensions; "
+        "thickness set to 12 mm for this run, where the drawing says 25 mm"
+    ) in inputs
+    assert any(c.run_store_ref == "run_params:/overrides/thickness" for c in report.claims)
+    flags_text = next(s.text for s in report.sections if s.key == "flags")
+    assert "must be revised" in flags_text
+    runs = {r["run_id"]: r for r in c.get("/api/runs").json()}
+    assert runs[second]["parent"] == first and runs[first]["overrides"] == {}

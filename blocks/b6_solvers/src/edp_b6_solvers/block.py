@@ -33,7 +33,7 @@ from edp_contracts.artifacts.design_graph import DesignGraph
 from edp_contracts.artifacts.margins import SCHEMA_VERSION, Margin, Margins
 from edp_contracts.artifacts.solver_runs import SCHEMA_VERSION as RUNS_SCHEMA_VERSION
 from edp_contracts.artifacts.solver_runs import MaterialUsed, MeshInfo, SolverRun, SolverRuns
-from edp_kit import ArtifactStore, pass_through, skip_reason
+from edp_kit import ArtifactStore, OverrideError, overrides, pass_through, skip_reason
 
 ASSUMPTIONS = [
     "linear elastic, small displacement",
@@ -116,6 +116,12 @@ class SolverConnectors:
             return self._fail(req, "DOMAIN_PACK_MISSING", str(exc))
         graph = DesignGraph.model_validate_json(self.store.read(graphs[0].uri))
         outline = _outline(graph)
+        try:
+            # The STEP was built with the run's overrides (block 4); size the mesh, choose the
+            # yield band and place the loads with the same values.
+            outline.update(overrides(req))
+        except OverrideError as exc:
+            return self._fail(req, "BAD_OVERRIDE", str(exc))
         grade = next((str(n.attributes.get("name")) for n in graph.nodes if n.kind == "material"), None)
         if grade is None or "thickness" not in outline:
             return self._fail(req, "MISSING_INPUT", "design graph needs a material and the plate thickness")
@@ -255,6 +261,8 @@ class SolverConnectors:
                     )
                 )
         metrics: dict[str, Any] = {
+            "thickness_mm": outline["thickness"],
+            "overrides": overrides(req),
             "mesh_seconds": round(mesh_seconds, 2),
             "runs": [
                 {

@@ -40,6 +40,14 @@ export const api = {
   usage: () => fetch("/api/usage").then((r) => json<Spend>(r)),
   runs: () => fetch("/api/runs").then((r) => json<RunSummary[]>(r)),
   mesh: (id: string) => fetch(`/api/runs/${id}/mesh`).then((r) => json<Mesh>(r)),
+  model: (id: string) => fetch(`/api/runs/${id}/model`).then((r) => json<Mesh>(r)),
+  rerun: (id: string, overrides: Record<string, number>) =>
+    fetch(`/api/runs/${id}/rerun`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ overrides }),
+    }).then((r) => json<{ run_id: string }>(r)),
+  reportUrl: (id: string) => `/api/runs/${id}/report.docx`,
   sourceUrl: (id: string) => `/api/runs/${id}/source`,
 };
 

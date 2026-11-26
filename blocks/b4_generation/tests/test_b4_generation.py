@@ -65,3 +65,26 @@ def test_block_writes_a_cad_script_and_skips_without_a_domain_pack(tmp_path):
 
 def test_generation_is_registered():
     assert isinstance(discover_blocks()["b4_generation"], Generation)
+
+
+def test_override_changes_the_script_and_says_so(tmp_path):
+    fabric = FabricStore(tmp_path / "fabric")
+    up = fabric.ingest("bp.dxf", drawing_bytes("base_plate"), uploader="t")
+    geometry, _, _ = dxf.parse(fabric.read(up.uri), up.file_id, up.commit)
+    from edp_contracts import Artifact
+
+    uri = fabric.write("r", "b2_interpretation", "dg.json", interpret(geometry)[0].model_dump_json().encode())
+    art = Artifact(kind="design_graph", uri=uri, schema_version="0.1.0", sources=up.as_artifact().sources)
+    params = {"domain_pack": "construction", "overrides": {"thickness": 33.0}}
+    result = Generation(fabric).run(BlockRequest(run_id="r", inputs=[art], params=params))
+    assert result.status == "ok"  # the override note is information, not a stop
+    flag = next(f for f in result.flags if f.code == "PARAMETER_OVERRIDDEN")
+    assert flag.severity == "info" and flag.target is not None and "33 mm set by the run" in flag.message
+    script = CadScript.model_validate_json(fabric.read(result.outputs[0].uri))
+    t = next(p for p in script.parameters if p.name == "thickness")
+    assert t.value == 33.0 and "OVERRIDDEN" in t.comment and t.source.handle  # still traced to the drawing
+    assert "thickness = 33.0" in script.code
+    bad = Generation(fabric).run(
+        BlockRequest(run_id="r", inputs=[art], params={"domain_pack": "construction", "overrides": {"x": 1}})
+    )
+    assert bad.status == "failed" and bad.flags[0].code == "BAD_OVERRIDE"

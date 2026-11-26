@@ -15,6 +15,7 @@
 | Report text from fixed templates; numbers inserted by code; diagnostic: the anchor hole nearest the peak | `edp_b8_report.compose` |
 | DOCX with a "DRAFT: not signed off" line, run and pack hashes, seven sections, and a claims table with each figure's Run Store reference | `edp_b8_report.docx_writer` |
 | Sign-off as a review stop (`SIGN_OFF_REQUIRED`); a failed fact check fails the run so it cannot be approved past (AC-P6-03) | `InsightReport.run` |
+| Console design check (2026-11-26): editable model, margin, report with fact-check count, DOCX download, sign-off; generated model in the 3D viewer with the peak-stress point; **change the thickness and run again** as a new run, the report citing the changed value from the run's parameters next to the drawing's value | `console/src/components/Results.tsx`, `edp_orchestrator.server` (`/model`, `/report.docx`, `/rerun`), `edp_kit.overrides` |
 
 ## 2. Exit criteria (acceptance-criteria.md §7)
 
@@ -26,7 +27,7 @@
 | AC-P6-04 DeepEval faithfulness | Not started (no LLM narrative yet; OD-6) |
 | AC-P6-05 lineage export | Not started |
 | AC-P6-06 console highlight of every item | Not started for blocks 4 to 8 |
-| AC-P6-07 console completion | Not started (margins, envelope, report studio views) |
+| AC-P6-07 console completion | **In progress**: margins view and a first report view built (design check tab); envelope view and report studio not started |
 | AC-P6-08 hardening | Not started |
 
 ## 3. Found while building
@@ -37,6 +38,19 @@
 ## 4. Verification
 
 See [phase-4.md](phase-4.md) §5 for the CI run and the end-to-end run, which cover this block.
+
+## 4a. Demo 4 in the console (2026-11-26)
+
+On `con-iso-base_plate-003` (580 × 290 × 15 mm, S355JR, illustrative 100 kN uplift), in the browser:
+
+| Step | Result |
+|---|---|
+| Run the sample | Model, margin **0.36** (986 MPa against 355 MPa), block 6 stops for review |
+| Thickness 30 mm, Run again | New run: margin **1.34** (258 MPa against 345 MPa, the 16–40 mm yield band), "Was 0.36 at 15 mm" shown; no stop at block 6 |
+| Report | 22 of 22 figures traced; inputs say "thickness set to 30 mm for this run, where the drawing says 15 mm"; flags say the drawing must be revised before issue |
+| Sign off | Run completed |
+
+The 30 mm mesh is coarser (element size 15 to 3.75 mm, 9,438 elements), because element size follows the thickness; the convergence study is still open (OD-57).
 
 ## 5. Still open
 

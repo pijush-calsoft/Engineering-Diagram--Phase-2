@@ -197,6 +197,19 @@ def test_nothing_recognised_is_flagged_for_review(tmp_path):
     assert Interpretation(fabric).run(BlockRequest(run_id="r", inputs=geo)).status == "needs_review"
 
 
+def test_a_3d_model_is_noted_not_stopped(tmp_path):
+    # Block 2 reads 2D drawings only: a STEP model's empty graph is expected, so the run goes on.
+    from edp_b1_parser import model3d
+    from edp_eval.synth.models import write_model_set
+
+    write_model_set(tmp_path, 1, seed=3, uri_prefix="s3://edp-fabric/golden/models")
+    step = next(tmp_path.glob("*.step")).read_bytes()
+    geometry, _, _ = model3d.parse_brep(step, "step", "f", "c")
+    _, flags, _ = interpret(geometry)
+    flag = next(f for f in flags if f.code == "EMPTY_INTERPRETATION")
+    assert flag.severity == "info" and "2D drawings only" in flag.message
+
+
 def test_suite_scores_and_can_fail(tmp_path):
     write_set(tmp_path, 4, seed=8, uri_prefix="s3://edp-fabric/golden")
     report = run(tmp_path, value_tol=1e-6)

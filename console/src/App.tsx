@@ -3,22 +3,38 @@ import { api, watchRun } from "./api";
 import { Chat } from "./components/Chat";
 import { Inspector, type Selection } from "./components/Inspector";
 import { Pipeline } from "./components/Pipeline";
+import { type DesignResults, Results } from "./components/Results";
 import { RunsList } from "./components/RunsList";
 import { type Scan, Workspace } from "./components/Workspace";
 import { sheetBox } from "./geometry";
 import type {
   BlockInfo,
   BlockState,
+  CadScript,
   ChatStatus,
   DesignGraph,
   Flag,
   Geometry,
+  Margins,
+  Report,
   RunEvent,
   RunSummary,
   RunView,
   SimilarParts,
+  SolverRuns,
   Spend,
 } from "./types";
+
+// Stable empty values: the 3D viewer rebuilds its scene when its props change.
+const NO_SOLIDS: never[] = [];
+const NOTHING_TRACED = new Set<string>();
+const NO_RESULTS: DesignResults = { script: null, margins: null, solverRuns: null, report: null };
+const RESULT_KINDS: Record<string, keyof DesignResults> = {
+  cad_script: "script",
+  margins: "margins",
+  solver_runs: "solverRuns",
+  report: "report",
+};
 
 // three.js is large: load the 3D viewer only when a 3D model is opened.
 const Viewer3D = lazy(() => import("./components/Viewer3D").then((m) => ({ default: m.Viewer3D })));
@@ -57,7 +73,10 @@ export function App() {
   const [scan, setScan] = useState<Scan | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"read" | "ask">("read");
+  const [tab, setTab] = useState<"read" | "check" | "ask">("read");
+  const [results, setResults] = useState<DesignResults>(NO_RESULTS);
+  const [previous, setPrevious] = useState<{ runId: string; margin: number; thickness: number | null } | null>(null);
+  const [surface, setSurface] = useState<"drawing" | "model">("drawing");
   const [chatStatus, setChatStatus] = useState<ChatStatus | null>(null);
   const [spend, setSpend] = useState<Spend | null>(null);
   const loaded = useRef<Set<string>>(new Set());
@@ -90,6 +109,10 @@ export function App() {
   const refresh = useCallback(async (id: string) => {
     const v = await api.run(id);
     setView(v);
+    if (v.status.state === "completed") {
+      // Approving a review emits no block event: a completed run's reviewed stages are done.
+      setStates((prev) => Object.fromEntries(Object.entries(prev).map(([k, s]) => [k, s === "review" ? "done" : s])));
+    }
     if (v.upload?.kind === "image" && !loaded.current.has("scan")) {
       loaded.current.add("scan");
       const url = api.sourceUrl(id);
@@ -108,6 +131,23 @@ export function App() {
       } else if (a.kind === "similar_parts" && a.uri.startsWith("fabric://")) {
         loaded.current.add(a.uri);
         setSimilar(await api.artifact<SimilarParts>(a.uri));
+      } else if (a.kind in RESULT_KINDS && a.uri.startsWith("fabric://")) {
+        loaded.current.add(a.uri);
+        const doc = await api.artifact<CadScript | Margins | SolverRuns | Report>(a.uri);
+        setResults((r) => ({ ...r, [RESULT_KINDS[a.kind]]: doc }) as DesignResults);
+        if (a.kind === "cad_script") setTab("check"); // a model is on its way: show the design check
+      }
+    }
+    // The run this one changed: its margin, to compare against.
+    if (v.parent && !loaded.current.has("parent")) {
+      loaded.current.add("parent");
+      const pv = await api.run(v.parent);
+      const uri = (kind: string) => pv.artifacts.find((a) => a.kind === kind && a.uri.startsWith("fabric://"))?.uri;
+      const [m, s] = [uri("margins"), uri("cad_script")];
+      if (m) {
+        const margin = (await api.artifact<Margins>(m)).margins[0]?.margin;
+        const t = s ? (await api.artifact<CadScript>(s)).parameters.find((p) => p.name === "thickness") : undefined;
+        if (margin !== undefined) setPrevious({ runId: v.parent, margin, thickness: t ? Number(t.value) : null });
       }
     }
   }, []);
@@ -143,6 +183,9 @@ export function App() {
     setSimilar(null);
     setScan(null);
     setSelection(null);
+    setResults(NO_RESULTS);
+    setPrevious(null);
+    setSurface("drawing");
     loaded.current = new Set();
   };
 
@@ -175,6 +218,10 @@ export function App() {
     } catch (e) {
       setError((e as Error).message);
     }
+  };
+
+  const rerun = (overrides: Record<string, number>) => {
+    if (runId) begin(() => api.rerun(runId, overrides));
   };
 
   const review = async (decision: "approve" | "reject", reviewer: string) => {
@@ -228,6 +275,8 @@ export function App() {
   const tb = geometry?.title_block ?? {};
   const runState = view ? (view.running ? "Running" : RUN_STATE_TEXT[view.status.state]) : runId ? "Starting" : "";
   const solids = geometry?.solids ?? [];
+  const hasModel = !!view?.artifacts.some((a) => a.block === "b5_opencad" && a.kind === "step" && a.uri.startsWith("fabric://"));
+  const peak = useMemo(() => results.solverRuns?.runs[0]?.max_point_mm ?? null, [results.solverRuns]);
 
   const titleBlock = (
     <table className="title-block" aria-label="Title block">
@@ -342,28 +391,47 @@ export function App() {
 
       <main className="workspace">
         <RunsList runs={runs} current={runId} onOpen={open} />
-        {solids.length > 0 && runId ? (
-          <Suspense fallback={<div className="workspace-empty">Loading the 3D viewer…</div>}>
-            <Viewer3D runId={runId} solids={solids} traced={selection?.handles ?? new Set()} units={geometry?.units ?? null} />
-          </Suspense>
-        ) : (
-          <Workspace
-            geometry={geometry}
-            graph={graph}
-            box={box}
-            scan={scan}
-            traced={selection?.handles ?? new Set()}
-            flagged={flagged}
-            selectedKey={selection?.key ?? null}
-            onSelect={cite}
-            titleBlock={titleBlock}
-            empty={empty}
-          />
-        )}
+        <div className="middle">
+          {hasModel && runId && (
+            <div className="surface-switch" role="toolbar" aria-label="Show">
+              <button className="layer" aria-pressed={surface === "drawing"} onClick={() => setSurface("drawing")}>
+                Drawing
+              </button>
+              <button className="layer" aria-pressed={surface === "model"} onClick={() => setSurface("model")}>
+                Generated model
+              </button>
+            </div>
+          )}
+          {hasModel && runId && surface === "model" ? (
+            <Suspense fallback={<div className="workspace-empty">Loading the 3D viewer…</div>}>
+              <Viewer3D runId={runId} solids={NO_SOLIDS} traced={NOTHING_TRACED} units="mm" source="model" peak={peak} />
+            </Suspense>
+          ) : solids.length > 0 && runId ? (
+            <Suspense fallback={<div className="workspace-empty">Loading the 3D viewer…</div>}>
+              <Viewer3D runId={runId} solids={solids} traced={selection?.handles ?? new Set()} units={geometry?.units ?? null} />
+            </Suspense>
+          ) : (
+            <Workspace
+              geometry={geometry}
+              graph={graph}
+              box={box}
+              scan={scan}
+              traced={selection?.handles ?? new Set()}
+              flagged={flagged}
+              selectedKey={selection?.key ?? null}
+              onSelect={cite}
+              titleBlock={titleBlock}
+              empty={empty}
+            />
+          )}
+        </div>
         <div className="side">
           <div className="tabs" role="tablist" aria-label="Right panel">
             <button role="tab" id="tab-read" aria-selected={tab === "read"} aria-controls="panel-read" onClick={() => setTab("read")}>
               Read from the drawing
+            </button>
+            <button role="tab" id="tab-check" aria-selected={tab === "check"} aria-controls="panel-check" onClick={() => setTab("check")}>
+              Design check
             </button>
             <button role="tab" id="tab-ask" aria-selected={tab === "ask"} aria-controls="panel-ask" onClick={() => setTab("ask")}>
               Ask about it
@@ -382,6 +450,9 @@ export function App() {
               onSelect={setSelection}
               onReview={review}
             />
+          </div>
+          <div role="tabpanel" id="panel-check" aria-labelledby="tab-check" hidden={tab !== "check"} className="panel">
+            <Results runId={runId} view={view} results={results} previous={previous} onRerun={rerun} onReview={review} />
           </div>
           <div role="tabpanel" id="panel-ask" aria-labelledby="tab-ask" hidden={tab !== "ask"} className="panel">
             <Chat
