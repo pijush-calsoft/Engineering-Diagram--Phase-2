@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 from edp_b1_parser import dwg, dxf, model3d, pdf, scan
+from edp_b1_parser.annotations import annotation_flags
 from edp_contracts import Artifact, BlockRequest, BlockResult, Flag
 from edp_contracts.artifacts.geometry import SCHEMA_VERSION
 from edp_gateway import Gateway, GatewayConfig, ImageNotAllowed
@@ -100,6 +101,7 @@ class DrawingParser:
                 flags.extend(file_flags)
                 continue
             file_flags = conversion + file_flags
+            file_flags += annotation_flags(geometry, art.kind, file_metrics.get("skipped"))
             uri = self.store.write(
                 req.run_id, self.name, f"geometry-{i}.json", geometry.model_dump_json().encode("utf-8")
             )

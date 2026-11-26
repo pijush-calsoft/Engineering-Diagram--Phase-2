@@ -181,6 +181,22 @@ def test_low_confidence_goes_to_the_knowledge_graph_not_to_review(tmp_path):
     assert Interpretation(fabric).run(BlockRequest(run_id="r2", inputs=geo2)).status == "needs_review"
 
 
+def test_nothing_recognised_is_flagged_for_review(tmp_path):
+    # OD-62: lines only (lettering and dimensions drawn as outlines) used to give an empty
+    # graph with status ok.
+    doc, _ = plate()
+    graph, flags, _ = graph_of(doc)
+    assert not graph.nodes
+    flag = next(f for f in flags if f.code == "EMPTY_INTERPRETATION")
+    assert flag.severity == "review" and "from 4 entities" in flag.message
+    fabric = FabricStore(tmp_path)
+    buf = io.StringIO()
+    doc.write(buf)
+    up = fabric.ingest("e.dxf", buf.getvalue().encode(), uploader="t")
+    geo = DrawingParser(fabric).run(BlockRequest(run_id="r", inputs=[up.as_artifact()])).outputs
+    assert Interpretation(fabric).run(BlockRequest(run_id="r", inputs=geo)).status == "needs_review"
+
+
 def test_suite_scores_and_can_fail(tmp_path):
     write_set(tmp_path, 4, seed=8, uri_prefix="s3://edp-fabric/golden")
     report = run(tmp_path, value_tol=1e-6)

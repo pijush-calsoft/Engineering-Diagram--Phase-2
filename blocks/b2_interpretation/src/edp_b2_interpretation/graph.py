@@ -94,6 +94,16 @@ def interpret(geometry: Geometry) -> tuple[DesignGraph, list[Flag], dict[str, An
                 sources=[tb.tolerances.locator],
             )
         )
+    if not any(n.kind in ("feature", "parameter") for n in nodes):
+        # OD-62: nothing to model. Say so rather than hand an empty graph on as a result.
+        flags.append(
+            Flag(
+                code="EMPTY_INTERPRETATION",
+                severity="review",
+                message=f"no feature or dimension recognised from {len(geometry.entities)} entities "
+                f"and {len(geometry.solids)} solids",
+            )
+        )
     metrics = {
         "features": {t: n for t, n in counters.items()},
         "part_level_dimensions": len(rec.unassociated),

@@ -15,6 +15,18 @@ Output: `geometry` artifact (schema 0.2.0), written to the Data Fabric's cleaned
 | STL | trimesh: bounding box, watertightness, volume, through-opening hint (genus); flagged `LOSSY_INPUT`, and unit-less | `mesh` | `model3d.py` |
 | Scans, images (PNG, JPEG, TIFF; PDFs whose pages hold only images) | OpenCV median filter and deskew, then gpt-5.5 reads title block, dimensions and notes with boxes through the Model Gateway (ADR-0007); boxes and numbers checked in code and mapped back onto the original image | `p<page>/dim-<k>`, `p<page>/note-<k>`, `p<page>/tb-<field>`; bbox in image pixels, y up | `scan.py` |
 
+## Drawings with nothing to read (OD-62)
+
+A 2D drawing (DXF, DWG, PDF, scan) with no dimension entity is flagged for review, so the run stops at block 1 instead of going on with an empty result (`annotations.py`). 3D models are not checked.
+
+| Flag | When | Message hints at |
+|---|---|---|
+| `EMPTY_DRAWING` | no entity was read | |
+| `NO_DIMENSIONS` | entities but no dimension; text present | values written as plain text are not taken as dimensions |
+| `NO_DIMENSIONS` | entities, no dimension and no text | lettering drawn as outlines, with the count of skipped HATCH entities; export again with text and dimensions kept, or read as a scan |
+
+Found with a plan and a section exported as DXF from an open-source BIM tool, which writes lettering as hatches and dimensions as lines.
+
 ## Results on the synthetic golden sets (2026-11-25)
 
 | Set | Command | Result |

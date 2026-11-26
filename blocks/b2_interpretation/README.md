@@ -11,7 +11,7 @@ Geometry in, `design_graph` out (plan Phase 3). Output goes to the Data Fabric's
 | 1. Design graph schema | Uses `edp_contracts.artifacts.design_graph` v0.1: feature nodes with parameter nodes (`has_parameter`), part-level dimension parameters, material and general-tolerance nodes from the title block |
 | 2. Feature recognition, rule-based first | **hole** (circle + diameter dim + position from the outline corner), **slot** (two facing half-arcs), **bend** (two concentric arcs). Also Phase 2 task 2: each dimension is linked to the feature it measures |
 | 3. Requirements parsing (Docling + LLM) | Not started: needs the LLM path (OD-43) |
-| 4. Unit and consistency checks with pint | `value_mm` on every parameter; `CONTRADICTION`, `FEATURE_OUTSIDE_PART`, `[UNITS_UNKNOWN]` flags |
+| 4. Unit and consistency checks with pint | `value_mm` on every parameter; `CONTRADICTION`, `FEATURE_OUTSIDE_PART`, `[UNITS_UNKNOWN]` flags; `EMPTY_INTERPRETATION` (review) when no feature or dimension is recognised (OD-62) |
 | 5. Low-confidence flags with a reason code | `LOW_CONFIDENCE` with `[UNDIMENSIONED]` or `[NO_DATUM]` |
 
 Each parameter records how its value was found:

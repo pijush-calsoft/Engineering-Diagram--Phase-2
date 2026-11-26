@@ -107,10 +107,18 @@ def test_unsupported_entities_are_counted_not_guessed():
     assert flags[0].code == "UNSUPPORTED_ENTITY" and flags[0].severity == "info"
 
 
+def add_dimension(msp) -> None:
+    msp.add_line((0, 0), (80, 0))
+    msp.add_linear_dim(
+        base=(0, -10), p1=(0, 0), p2=(80, 0), dimstyle="EZDXF", override={"dimlfac": 1}
+    ).render()
+
+
 def test_block_writes_geometry_to_the_cleaned_zone(tmp_path):
     fabric = FabricStore(tmp_path)
     doc, msp = new_doc()
     msp.add_text("PART NO: X-1")
+    add_dimension(msp)  # a drawing with no dimension is flagged NO_DIMENSIONS (OD-62)
     up = fabric.ingest("x.dxf", to_bytes(doc), uploader="t")
     parser = DrawingParser(fabric)
     assert isinstance(parser, Block)
@@ -126,11 +134,44 @@ def test_needs_review_when_flags_need_review(tmp_path):
     fabric = FabricStore(tmp_path)
     doc, msp = new_doc()
     msp.add_text("UNITS: IN")
+    add_dimension(msp)
     up = fabric.ingest("x.dxf", to_bytes(doc), uploader="t")
-    assert (
-        DrawingParser(fabric).run(BlockRequest(run_id="r1", inputs=[up.as_artifact()])).status
-        == "needs_review"
-    )
+    result = DrawingParser(fabric).run(BlockRequest(run_id="r1", inputs=[up.as_artifact()]))
+    assert result.status == "needs_review" and [f.code for f in result.flags] == ["UNIT_MISMATCH"]
+
+
+def test_drawing_with_outlined_lettering_is_flagged_not_passed(tmp_path):
+    # OD-62: lettering and dimensions written as hatches and lines, as some BIM tools export them.
+    fabric = FabricStore(tmp_path)
+    doc, msp = new_doc()
+    msp.add_lwpolyline([(0, 0), (200, 0), (200, 100), (0, 100)], close=True)
+    msp.add_line((0, -20), (200, -20))  # a dimension line drawn as a plain line
+    glyph = msp.add_hatch()
+    glyph.paths.add_polyline_path([(90, -30), (95, -30), (95, -24), (90, -24)])  # "6" as a filled outline
+    up = fabric.ingest("frame.dxf", to_bytes(doc), uploader="t")
+    result = DrawingParser(fabric).run(BlockRequest(run_id="r1", inputs=[up.as_artifact()]))
+    assert result.status == "needs_review" and result.outputs
+    flag = next(f for f in result.flags if f.code == "NO_DIMENSIONS")
+    assert flag.severity == "review" and "outlines" in flag.message and "1 HATCH" in flag.message
+
+
+def test_text_without_dimensions_is_flagged(tmp_path):
+    fabric = FabricStore(tmp_path)
+    doc, msp = new_doc()
+    msp.add_line((0, 0), (80, 0))
+    msp.add_text("LENGTH 80")
+    up = fabric.ingest("x.dxf", to_bytes(doc), uploader="t")
+    result = DrawingParser(fabric).run(BlockRequest(run_id="r1", inputs=[up.as_artifact()]))
+    flag = next(f for f in result.flags if f.code == "NO_DIMENSIONS")
+    assert "1 text item" in flag.message and result.status == "needs_review"
+
+
+def test_empty_drawing_is_flagged(tmp_path):
+    fabric = FabricStore(tmp_path)
+    doc, _ = new_doc()
+    up = fabric.ingest("x.dxf", to_bytes(doc), uploader="t")
+    result = DrawingParser(fabric).run(BlockRequest(run_id="r1", inputs=[up.as_artifact()]))
+    assert [f.code for f in result.flags] == ["EMPTY_DRAWING"] and result.status == "needs_review"
 
 
 def test_registered_through_the_entry_point(tmp_path, monkeypatch):
