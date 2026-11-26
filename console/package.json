@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "licences": "node scripts/check-licences.mjs"
+    "licences": "node scripts/check-licences.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@assistant-ui/react": "0.15.38",
@@ -15,11 +16,14 @@
     "@fontsource/barlow-semi-condensed": "^5.3.0",
     "@xyflow/react": "^13.0.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "three": "0.187.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.1",
     "@types/react": "^18.3.32",
     "@types/react-dom": "^18.3.7",
+    "@types/three": "0.187.0",
     "@vitejs/plugin-react": "^6.3.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8"

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, watchRun } from "./api";
 import { Chat } from "./components/Chat";
-import { DrawingSheet } from "./components/DrawingSheet";
 import { Inspector, type Selection } from "./components/Inspector";
 import { Pipeline } from "./components/Pipeline";
+import { RunsList } from "./components/RunsList";
+import { type Scan, Workspace } from "./components/Workspace";
 import { sheetBox } from "./geometry";
 import type {
   BlockInfo,
@@ -13,10 +14,14 @@ import type {
   Flag,
   Geometry,
   RunEvent,
+  RunSummary,
   RunView,
   SimilarParts,
   Spend,
 } from "./types";
+
+// three.js is large: load the 3D viewer only when a 3D model is opened.
+const Viewer3D = lazy(() => import("./components/Viewer3D").then((m) => ({ default: m.Viewer3D })));
 
 const RUN_STATE_TEXT: Record<string, string> = {
   completed: "Completed",
@@ -33,10 +38,15 @@ function stateFromEvent(e: RunEvent): BlockState | null {
   return null;
 }
 
+function money(usd: number): string {
+  return usd < 0.01 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(2)}`;
+}
+
 export function App() {
   const [blocks, setBlocks] = useState<BlockInfo[]>([]);
   const [samples, setSamples] = useState<string[]>([]);
   const [sample, setSample] = useState("");
+  const [runs, setRuns] = useState<RunSummary[]>([]);
   const [runId, setRunId] = useState<string | null>(null);
   const [view, setView] = useState<RunView | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
@@ -44,13 +54,22 @@ export function App() {
   const [geometry, setGeometry] = useState<Geometry | null>(null);
   const [graph, setGraph] = useState<DesignGraph | null>(null);
   const [similar, setSimilar] = useState<SimilarParts | null>(null);
+  const [scan, setScan] = useState<Scan | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"read" | "ask">("read");
   const [chatStatus, setChatStatus] = useState<ChatStatus | null>(null);
   const [spend, setSpend] = useState<Spend | null>(null);
   const loaded = useRef<Set<string>>(new Set());
+  const stopWatch = useRef<() => void>(() => undefined);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const refreshRuns = useCallback(() => {
+    api.runs().then(setRuns).catch(() => undefined);
+  }, []);
+  const refreshSpend = useCallback(() => {
+    api.usage().then(setSpend).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     api.blocks().then(setBlocks).catch((e) => setError(`Cannot reach the console API: ${e.message}`));
@@ -59,12 +78,10 @@ export function App() {
       setSample(s[0] ?? "");
     });
     api.chatStatus().then(setChatStatus).catch(() => setChatStatus(null));
-    api.usage().then(setSpend).catch(() => setSpend(null));
-  }, []);
+    refreshSpend();
+    refreshRuns();
+  }, [refreshRuns, refreshSpend]);
 
-  const refreshSpend = useCallback(() => {
-    api.usage().then(setSpend).catch(() => undefined);
-  }, []);
   const cite = useCallback(
     (key: string, handles: Set<string>) => setSelection((s) => (s?.key === key ? null : { key, handles })),
     [],
@@ -73,6 +90,13 @@ export function App() {
   const refresh = useCallback(async (id: string) => {
     const v = await api.run(id);
     setView(v);
+    if (v.upload?.kind === "image" && !loaded.current.has("scan")) {
+      loaded.current.add("scan");
+      const url = api.sourceUrl(id);
+      const img = new Image();
+      img.onload = () => setScan({ url, w: img.naturalWidth, h: img.naturalHeight });
+      img.src = url;
+    }
     for (const a of v.artifacts) {
       if (loaded.current.has(a.uri)) continue;
       if (a.kind === "geometry") {
@@ -89,8 +113,9 @@ export function App() {
   }, []);
 
   const follow = useCallback(
-    (id: string) =>
-      watchRun(
+    (id: string) => {
+      stopWatch.current();
+      stopWatch.current = watchRun(
         id,
         (e) => {
           setEvents((prev) => (prev.some((p) => p.seq === e.seq) ? prev : [...prev, e]));
@@ -98,20 +123,17 @@ export function App() {
           if (s) setStates((prev) => ({ ...prev, [e.payload.block]: s }));
           if (e.subject === "run.block.completed") refresh(id);
         },
-        () => refresh(id),
-      ),
-    [refresh],
+        () => {
+          refresh(id);
+          refreshRuns();
+          refreshSpend();
+        },
+      );
+    },
+    [refresh, refreshRuns, refreshSpend],
   );
 
-  // A run can be opened by link: ?run=<id>
-  useEffect(() => {
-    const id = new URLSearchParams(location.search).get("run");
-    if (!id) return;
-    setRunId(id);
-    refresh(id).then(() => follow(id)).catch((e) => setError(`Cannot open run ${id}: ${e.message}`));
-  }, [refresh, follow]);
-
-  const begin = async (start: () => Promise<{ run_id: string }>) => {
+  const reset = () => {
     setError(null);
     setView(null);
     setEvents([]);
@@ -119,12 +141,36 @@ export function App() {
     setGeometry(null);
     setGraph(null);
     setSimilar(null);
+    setScan(null);
     setSelection(null);
     loaded.current = new Set();
+  };
+
+  const open = useCallback(
+    (id: string) => {
+      reset();
+      setRunId(id);
+      history.replaceState(null, "", `?run=${id}`);
+      refresh(id)
+        .then(() => follow(id))
+        .catch((e) => setError(`Cannot open run ${id}: ${e.message}`));
+    },
+    [refresh, follow],
+  );
+
+  // A run can be opened by link: ?run=<id>
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get("run");
+    if (id) open(id);
+  }, [open]);
+
+  const begin = async (start: () => Promise<{ run_id: string }>) => {
+    reset();
     try {
       const { run_id } = await start();
       setRunId(run_id);
       history.replaceState(null, "", `?run=${run_id}`);
+      refreshRuns();
       follow(run_id);
     } catch (e) {
       setError((e as Error).message);
@@ -151,6 +197,11 @@ export function App() {
   }, [graph]);
 
   const flags: Flag[] = useMemo(() => view?.status.results.flatMap((r) => r.flags) ?? [], [view]);
+  const flagCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const r of view?.status.results ?? []) c[r.block] = r.flags.filter((f) => f.severity !== "info").length;
+    return c;
+  }, [view]);
   // Values the knowledge graph confirmed are no longer open: drop them from the red marks.
   const settled = useMemo(() => {
     const ids = new Set(similar?.corroborations.filter((c) => c.status === "resolved").map((c) => c.parameter));
@@ -170,9 +221,13 @@ export function App() {
       ),
     [flags, settled],
   );
-  const box = useMemo(() => (geometry ? sheetBox(geometry.entities) : null), [geometry]);
+  const box = useMemo(() => {
+    if (scan) return { x0: 0, y0: 0, x1: scan.w, y1: scan.h };
+    return geometry ? sheetBox(geometry.entities) : null;
+  }, [geometry, scan]);
   const tb = geometry?.title_block ?? {};
   const runState = view ? (view.running ? "Running" : RUN_STATE_TEXT[view.status.state]) : runId ? "Starting" : "";
+  const solids = geometry?.solids ?? [];
 
   const titleBlock = (
     <table className="title-block" aria-label="Title block">
@@ -225,6 +280,18 @@ export function App() {
     </table>
   );
 
+  const empty = runId ? (
+    <p>Reading {view?.upload?.filename ?? "the file"}…</p>
+  ) : (
+    <div className="welcome">
+      <h2>Read a drawing</h2>
+      <p>
+        Run a sample or upload a DXF, DWG, PDF, scan, STEP or STL file. The platform reads it, recognises its features and
+        traces every value back to where it came from.
+      </p>
+    </div>
+  );
+
   return (
     <div className="app">
       <header className="masthead">
@@ -232,7 +299,7 @@ export function App() {
         <div className="controls">
           {samples.length > 0 && (
             <>
-              <label htmlFor="sample">Sample drawing</label>
+              <label htmlFor="sample">Sample</label>
               <select id="sample" value={sample} onChange={(e) => setSample(e.target.value)}>
                 {samples.map((s) => (
                   <option key={s}>{s}</option>
@@ -244,7 +311,7 @@ export function App() {
             </>
           )}
           <button className="secondary" onClick={() => fileInput.current?.click()}>
-            Upload a drawing
+            Upload a file
           </button>
           <input
             ref={fileInput}
@@ -257,6 +324,11 @@ export function App() {
               e.target.value = "";
             }}
           />
+          {spend && chatStatus?.available && (
+            <span className="spend" title="Model calls logged by the Model Gateway">
+              Model spend {money(spend.spent_usd)}
+            </span>
+          )}
         </div>
       </header>
 
@@ -266,27 +338,28 @@ export function App() {
         </p>
       )}
 
+      <Pipeline blocks={blocks} states={states} flags={flagCounts} />
+
       <main className="workspace">
-        <Pipeline blocks={blocks} states={states} />
-        <DrawingSheet
-          geometry={geometry}
-          box={box}
-          traced={selection?.handles ?? new Set()}
-          flagged={flagged}
-          titleBlock={titleBlock}
-          empty={
-            geometry?.solids?.length ? (
-              <p>
-                This is a 3D model ({geometry.solids.length} solid{geometry.solids.length > 1 ? "s" : ""}). What was read
-                from it is on the right; a 3D view comes later.
-              </p>
-            ) : runId ? (
-              <p>Reading the drawing…</p>
-            ) : (
-              <p>Run a sample drawing or upload a DXF. The parsed drawing appears here, and any value you select is traced back to it.</p>
-            )
-          }
-        />
+        <RunsList runs={runs} current={runId} onOpen={open} />
+        {solids.length > 0 && runId ? (
+          <Suspense fallback={<div className="workspace-empty">Loading the 3D viewer…</div>}>
+            <Viewer3D runId={runId} solids={solids} traced={selection?.handles ?? new Set()} units={geometry?.units ?? null} />
+          </Suspense>
+        ) : (
+          <Workspace
+            geometry={geometry}
+            graph={graph}
+            box={box}
+            scan={scan}
+            traced={selection?.handles ?? new Set()}
+            flagged={flagged}
+            selectedKey={selection?.key ?? null}
+            onSelect={cite}
+            titleBlock={titleBlock}
+            empty={empty}
+          />
+        )}
         <div className="side">
           <div className="tabs" role="tablist" aria-label="Right panel">
             <button role="tab" id="tab-read" aria-selected={tab === "read"} aria-controls="panel-read" onClick={() => setTab("read")}>
@@ -323,8 +396,10 @@ export function App() {
         </div>
       </main>
 
-      <footer className="log" aria-label="Run events">
-        <h2>Run events</h2>
+      <details className="log">
+        <summary>
+          Run events <span className="log-count">{events.length}</span>
+        </summary>
         {events.length === 0 ? (
           <p className="quiet">Events appear here as each block starts and finishes.</p>
         ) : (
@@ -338,7 +413,7 @@ export function App() {
             ))}
           </ol>
         )}
-      </footer>
+      </details>
     </div>
   );
 }

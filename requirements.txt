@@ -4,6 +4,7 @@
     # via
     #   edp
     #   edp-eval
+    #   edp-orchestrator
 -e ./blocks/b2_interpretation
     # via
     #   edp

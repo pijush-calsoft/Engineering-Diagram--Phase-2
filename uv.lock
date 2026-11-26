@@ -849,6 +849,7 @@ name = "edp-orchestrator"
 version = "0.1.0"
 source = { editable = "orchestrator" }
 dependencies = [
+    { name = "edp-b1-parser" },
     { name = "edp-catalogue" },
     { name = "edp-contracts" },
     { name = "edp-fabric" },
@@ -862,6 +863,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "edp-b1-parser", editable = "blocks/b1_parser" },
     { name = "edp-catalogue", editable = "platform/catalogue" },
     { name = "edp-contracts", editable = "contracts" },
     { name = "edp-fabric", editable = "platform/fabric" },

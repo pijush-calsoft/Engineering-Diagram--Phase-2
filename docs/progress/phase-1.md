@@ -106,3 +106,19 @@ Live, syn-iso-plate-000: "List the holes with their diameters." -> four holes, 5
 Live, same run: "What surface finish is required?" -> from_facts false, no citations: "The provided facts do not state any required surface finish."
 Headless Edge (CDP script) at 1440x900 and 390x844: suggestion clicked, answer rendered, first citation highlights the hole on the sheet; phone page width 390 (no sideways scroll)
 ```
+
+## 9. Console upgrade and end-to-end tests (2026-11-25)
+
+Owner feedback: the console looked basic. Rebuilt the layout and the drawing view; several items are plan Phase 6 console work done early.
+
+| Item | Detail |
+|---|---|
+| Layout | Pipeline as a strip across the top (React Flow, flag counts per block); runs list on the left; drawing or 3D view in the middle; Read and Ask tabs on the right; run events in a drawer |
+| Drawing workspace | `Workspace.tsx`: pan, zoom (wheel, buttons, keys), fit; layer switches with counts; feature markers from the design graph that trace on click; pointer readout; readable minimum label size; scan image underneath scans |
+| 3D viewer | `Viewer3D.tsx` with three.js 0.187 (MIT), loaded on demand; `edp_b1_parser.mesh` tessellates STEP and IGES with OCP (faces keep their entity ids) and serves STL as is; hole axes and rings; selected hole faces highlighted |
+| API | `GET /api/runs`, `GET /api/runs/{id}/source` (scan images only), `GET /api/runs/{id}/mesh` (3D only, cached per run) |
+| Tests | Playwright 1.65 (Apache-2.0, dev only) with the installed Edge: 6 end-to-end tests; Python test for the three endpoints |
+| Bug found by the tests | Feature markers took clicks only on their outline; now the whole marker area does |
+| Finding | The Knowledge Graph ingests misread scans and unnamed models (OD-54) |
+
+Verification: `npm run test:e2e` 6 passed; headless Edge screenshots of a DXF run (feature selected), a STEP run (hole highlighted), a scan run (image under the read values) and a 390-pixel phone layout (no sideways scroll).

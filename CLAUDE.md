@@ -83,6 +83,7 @@ uv run python -m edp_eval.synth --out eval/golden/data/synthetic-scan --scan-fro
 uv run python -m edp_eval.suites.parser_scan --golden eval/golden/data/synthetic-scan --value-tol 1e-6 --n-bins 10 --limit 20   # live model calls, about 2 USD
 uv run python -m edp_orchestrator.server --data-dir var/console --golden eval/golden/data/synthetic eval/golden/data/models   # console at http://127.0.0.1:8765
 (cd console && npm install && npm run build)                                    # build the console UI
+(cd console && npm run test:e2e)                                                # console end-to-end tests (Playwright, installed Edge; no model calls)
 uv run python -m edp_eval.synth --out eval/golden/data/synthetic --count 80 --seed 2026 --uri-prefix s3://edp-fabric/golden/synthetic
 ```
 

@@ -123,3 +123,31 @@ def test_chat_is_unavailable_without_a_key(tmp_path):
     c = TestClient(create_app(Console(tmp_path / "data", None, gateway=gw)))
     status = c.get("/api/chat").json()
     assert not status["available"] and "OPENAI_API_KEY" in status["reason"]
+
+
+def test_runs_list_source_image_and_mesh(tmp_path):
+    import cv2
+    import numpy as np
+
+    from edp_eval.synth.models import write_model_set
+
+    models = tmp_path / "models"
+    write_model_set(models, 1, 3, "s3://edp-fabric/golden/models")
+    gw, _ = gateway(tmp_path)
+    console = Console(tmp_path / "data", [models], gateway=gw)
+    c = TestClient(create_app(console))
+    step = next(n for n in c.get("/api/samples").json() if n.endswith(".step"))
+    run_id = c.post("/api/runs/sample", params={"name": step}).json()["run_id"]
+    wait(c, run_id)
+    (summary,) = c.get("/api/runs").json()
+    assert summary["run_id"] == run_id and summary["kind"] == "step" and summary["data_class"] == "synthetic"
+    mesh = c.get(f"/api/runs/{run_id}/mesh").json()
+    assert len(mesh["indices"]) % 3 == 0 and mesh["faces"] and mesh["faces"][0]["handle"].startswith("#")
+    assert c.get(f"/api/runs/{run_id}/source").status_code == 415
+    png = cv2.imencode(".png", np.full((20, 30), 255, np.uint8))[1].tobytes()
+    upload = console.start("scan.png", png)  # client data: the parser refuses to send it
+    wait(c, upload.run_id)
+    img = c.get(f"/api/runs/{upload.run_id}/source")
+    assert img.status_code == 200 and img.headers["content-type"] == "image/png" and img.content == png
+    assert c.get(f"/api/runs/{upload.run_id}/mesh").status_code == 415
+    assert c.get("/api/runs/run-nope/mesh").status_code == 404

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Orchestrator: LangGraph planner graph with block nodes (plan Phase 1)"
 requires-python = ">=3.11"
 dependencies = [
+    "edp-b1-parser",
     "edp-catalogue",
     "edp-contracts",
     "edp-fabric",
@@ -27,4 +28,5 @@ edp-contracts = { workspace = true }
 edp-kit = { workspace = true }
 edp-fabric = { workspace = true }
 edp-catalogue = { workspace = true }
+edp-b1-parser = { workspace = true }
 edp-gateway = { workspace = true }

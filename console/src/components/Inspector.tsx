@@ -99,9 +99,28 @@ export function Inspector({ geometry, graph, similar, settled, flags, box, view,
                   <>
                     <dt>Holes</dt>
                     <dd>
-                      {s.holes.length === 0
-                        ? "none"
-                        : s.holes.map((h) => `Ø${formatValue(Number(h.diameter.toFixed(4)))}`).join(", ")}
+                      {s.holes.length === 0 ? (
+                        "none"
+                      ) : (
+                        <span className="hole-list">
+                          {s.holes.map((h, j) => {
+                            const key = `solid${i}.hole${j}`;
+                            const handles = new Set(h.locators.map((l) => l.handle).filter((x): x is string => !!x));
+                            return (
+                              <button
+                                key={key}
+                                className={`param ${selection?.key === key ? "is-selected" : ""}`}
+                                aria-pressed={selection?.key === key}
+                                title={`Faces ${[...handles].join(", ")}`}
+                                onClick={() => toggle(key, handles)}
+                              >
+                                <span className="param-name">Hole {j + 1}</span>
+                                <span className="param-value">Ø{formatValue(Number(h.diameter.toFixed(4)))}</span>
+                              </button>
+                            );
+                          })}
+                        </span>
+                      )}
                     </dd>
                   </>
                 )}

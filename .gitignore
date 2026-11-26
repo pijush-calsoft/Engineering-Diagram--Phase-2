@@ -29,3 +29,6 @@ var/
 /engineering-diagram-platform-plan.md
 /AI_Engineering_Diagram_Platform_*.pptx
 /docs/reference/deck-text.md
+# Playwright output (console end-to-end tests)
+console/test-results/
+console/playwright-report/

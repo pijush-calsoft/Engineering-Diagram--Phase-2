@@ -22,10 +22,11 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from edp_b1_parser.mesh import Mesh, mesh_of
 from edp_catalogue import Catalogue
 from edp_catalogue.answer import CitedAnswer, Turn, cited_answer, facts_from_run
 from edp_contracts import Block
@@ -74,6 +75,16 @@ class Spend(BaseModel):
     calls: int
 
 
+class RunSummary(BaseModel):
+    run_id: str
+    filename: str
+    kind: str
+    data_class: str
+    state: str
+    running: bool
+    started: float
+
+
 class RunView(BaseModel):
     status: RunStatus
     running: bool
@@ -101,6 +112,8 @@ class Console:
         self.running: set[str] = set()
         self.uploads: dict[str, IngestResult] = {}
         self.data_class: dict[str, DataClass] = {}
+        self.started: dict[str, float] = {}
+        self.meshes: dict[str, Mesh] = {}
         self._gateway = gateway
 
     def gateway(self) -> Gateway:
@@ -139,11 +152,36 @@ class Console:
             self.gateway(), q.question, facts, self.data_class.get(run_id, "client"), run_id, q.history
         )
 
+    def runs(self) -> list[RunSummary]:
+        """Runs started in this console session, newest first."""
+        out = []
+        for run_id, up in self.uploads.items():
+            out.append(
+                RunSummary(
+                    run_id=run_id,
+                    filename=up.filename,
+                    kind=up.kind,
+                    data_class=self.data_class.get(run_id, "client"),
+                    state=self.orchestrator.status(run_id).state,
+                    running=run_id in self.running,
+                    started=self.started.get(run_id, 0.0),
+                )
+            )
+        return sorted(out, key=lambda r: r.started, reverse=True)
+
+    def mesh(self, run_id: str) -> Mesh:
+        """Triangles of the run's 3D input, for the viewer (display only; cached per run)."""
+        if run_id not in self.meshes:
+            up = self.uploads[run_id]
+            self.meshes[run_id] = mesh_of(self.fabric.read(up.uri), up.kind)
+        return self.meshes[run_id]
+
     def start(self, filename: str, data: bytes, data_class: DataClass = "client") -> StartedRun:
         upload = self.fabric.ingest(filename, data, uploader="console")
         run_id = f"run-{uuid.uuid4().hex[:8]}"
         self.uploads[run_id] = upload
         self.data_class[run_id] = data_class
+        self.started[run_id] = time.time()
         self.running.add(run_id)
         threading.Thread(
             target=self._work,
@@ -253,6 +291,38 @@ def create_app(console: Console) -> FastAPI:
             raise HTTPException(status_code=409, detail=f"run {run_id} is not waiting for review")
         console.review(run_id, decision)
         return {"run_id": run_id, "decision": decision.decision}
+
+    @app.get("/api/runs", response_model=list[RunSummary])
+    def runs() -> list[RunSummary]:
+        return console.runs()
+
+    @app.get("/api/runs/{run_id}/source")
+    def source(run_id: str) -> Response:
+        """The uploaded image of a scan run, drawn under what was read (images only)."""
+        up = console.uploads.get(run_id)
+        if up is None:
+            raise HTTPException(status_code=404, detail=f"unknown run {run_id}")
+        if up.kind != "image":
+            raise HTTPException(status_code=415, detail="only scan images are served")
+        data = console.fabric.read(up.uri)
+        media = "image/tiff"
+        if data[:4] == b"\x89PNG":
+            media = "image/png"
+        elif data[:2] == b"\xff\xd8":
+            media = "image/jpeg"
+        return Response(content=data, media_type=media)
+
+    @app.get("/api/runs/{run_id}/mesh", response_model=Mesh)
+    def mesh(run_id: str) -> Mesh:
+        up = console.uploads.get(run_id)
+        if up is None:
+            raise HTTPException(status_code=404, detail=f"unknown run {run_id}")
+        if up.kind not in ("step", "iges", "stl"):
+            raise HTTPException(status_code=415, detail="only 3D models have a mesh")
+        try:
+            return console.mesh(run_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @app.get("/api/chat", response_model=ChatStatus)
     def chat_status() -> ChatStatus:

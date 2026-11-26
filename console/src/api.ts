@@ -1,4 +1,4 @@
-import type { BlockInfo, ChatStatus, CitedAnswer, RunEvent, RunView, Spend } from "./types";
+import type { BlockInfo, ChatStatus, CitedAnswer, Mesh, RunEvent, RunSummary, RunView, Spend } from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -38,6 +38,9 @@ export const api = {
       signal,
     }).then((r) => json<CitedAnswer>(r)),
   usage: () => fetch("/api/usage").then((r) => json<Spend>(r)),
+  runs: () => fetch("/api/runs").then((r) => json<RunSummary[]>(r)),
+  mesh: (id: string) => fetch(`/api/runs/${id}/mesh`).then((r) => json<Mesh>(r)),
+  sourceUrl: (id: string) => `/api/runs/${id}/source`,
 };
 
 const SUBJECTS = ["run.planned", "run.block.started", "run.block.completed", "run.block.failed"];

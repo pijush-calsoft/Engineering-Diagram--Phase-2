@@ -125,3 +125,20 @@ export type CitedAnswer = {
 };
 
 export type Spend = { spent_usd: number; calls: number };
+
+export type RunSummary = {
+  run_id: string;
+  filename: string;
+  kind: string;
+  data_class: string;
+  state: string;
+  running: boolean;
+  started: number;
+};
+
+export type Mesh = {
+  positions: number[];
+  indices: number[];
+  faces: { handle: string | null; start: number; count: number }[];
+  bbox: [number, number, number, number, number, number];
+};

@@ -106,11 +106,16 @@ input {
   margin: 0;
 }
 
-/* Layout */
+/* Layout: masthead, pipeline strip, then runs | workspace | panel, then the events drawer. */
 .app {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app > .workspace {
+  flex: 1 1 auto;
 }
 
 .masthead {
@@ -119,8 +124,9 @@ input {
   gap: 0.75rem 1.5rem;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.25rem;
+  padding: 0.6rem 1.25rem;
   border-bottom: 1px solid var(--rule);
+  background: var(--sheet);
 }
 
 .controls {
@@ -135,7 +141,15 @@ input {
 }
 
 .controls select {
-  max-width: 16rem;
+  max-width: 17rem;
+}
+
+.spend {
+  margin-left: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-left: 3px solid var(--trace);
+  color: var(--graphite);
+  font-size: var(--step--1);
 }
 
 .error {
@@ -148,15 +162,15 @@ input {
 
 .workspace {
   display: grid;
-  grid-template-columns: 15.5rem minmax(0, 1fr) 21rem;
+  grid-template-columns: 13.5rem minmax(0, 1fr) 22rem;
   min-height: 0;
 }
 
-/* Pipeline */
+/* Pipeline strip */
 .pipeline {
-  border-right: 1px solid var(--rule);
-  min-height: 36rem;
-  padding: 0.5rem 0;
+  height: 4.6rem;
+  padding: 0.35rem 1rem;
+  border-bottom: 1px solid var(--rule);
 }
 
 .pipeline .react-flow {
@@ -180,16 +194,16 @@ input {
 
 .block-card {
   display: grid;
-  grid-template-columns: 1.6rem 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 0.55rem;
-  width: 13.5rem;
-  padding: 0.45rem 0.6rem;
+  grid-template-columns: 1.4rem 1fr;
+  column-gap: 0.4rem;
+  width: 160px;
+  padding: 0.3rem 0.5rem 0.35rem;
   background: var(--sheet);
   border: 1px solid var(--rule);
-  border-left-width: 4px;
+  border-bottom-width: 3px;
   border-radius: 2px;
   font-size: var(--step--1);
+  line-height: 1.25;
 }
 
 .block-index {
@@ -204,33 +218,39 @@ input {
 .block-title {
   font-family: var(--display);
   font-weight: 600;
-  font-size: var(--step-0);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.block-state {
   display: flex;
-  gap: 0.4rem;
-  align-items: baseline;
+  gap: 0.35rem;
+  align-items: center;
+  color: var(--graphite);
 }
 
 .block-stub {
-  font-family: var(--body);
-  font-weight: 400;
-  font-size: 0.75rem;
-  color: var(--graphite);
+  font-size: 0.6875rem;
   border: 1px dashed var(--graphite);
   border-radius: 2px;
-  padding: 0 0.25rem;
+  padding: 0 0.2rem;
 }
 
-.block-output,
-.block-state {
-  color: var(--graphite);
-}
-
-.block-state {
-  grid-column: 2;
+.block-flags {
+  margin-left: auto;
+  min-width: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 0.6rem;
+  background: var(--redline);
+  color: var(--sheet);
+  font-weight: 700;
+  text-align: center;
 }
 
 .block-card.state-running {
-  border-left-color: var(--trace);
+  border-bottom-color: var(--trace);
 }
 
 .block-card.state-running .block-state {
@@ -238,7 +258,7 @@ input {
 }
 
 .block-card.state-done {
-  border-left-color: var(--ink);
+  border-bottom-color: var(--ink);
 }
 
 .block-card.state-done .block-index {
@@ -247,7 +267,7 @@ input {
 
 .block-card.state-review,
 .block-card.state-failed {
-  border-left-color: var(--redline);
+  border-bottom-color: var(--redline);
   background: var(--redline-wash);
 }
 
@@ -257,44 +277,271 @@ input {
   font-weight: 600;
 }
 
-/* Drawing sheet */
-.sheet {
-  padding: 1rem;
-  min-width: 0;
+/* Runs list */
+.runs {
+  border-right: 1px solid var(--rule);
+  padding: 0.85rem 0.75rem;
+  overflow-y: auto;
   min-height: 0;
-  display: flex;
-  align-items: flex-start;
 }
 
-.sheet-empty {
+.runs h2 {
+  font-size: var(--step-0);
+}
+
+.runs ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.run-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  background: var(--sheet);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule);
+  font-family: var(--body);
+  font-weight: 400;
+  padding: 0.35rem 0.5rem;
+}
+
+.run-item[aria-current="true"] {
+  border-color: var(--ink);
+  border-left-color: var(--trace);
+}
+
+.run-item.state-completed {
+  border-left-color: var(--ink);
+}
+
+.run-item.state-running {
+  border-left-color: var(--trace);
+}
+
+.run-item.state-awaiting_review,
+.run-item.state-stopped,
+.run-item.state-rejected {
+  border-left-color: var(--redline);
+}
+
+.run-file {
+  font-family: var(--display);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
+  color: var(--graphite);
+  font-size: var(--step--1);
+}
+
+.run-kind {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.run-client {
+  color: var(--redline);
+  font-size: var(--step--1);
+}
+
+/* Workspace: toolbar over a pannable canvas */
+.workspace-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.workspace-empty {
+  display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2rem;
   color: var(--graphite);
   text-align: center;
 }
 
-.sheet-empty p {
-  max-width: 34ch;
+.welcome {
+  max-width: 34rem;
 }
 
-.sheet-field {
-  flex: 1;
+.welcome h2 {
+  color: var(--ink);
+  font-size: var(--step-2);
+}
+
+.ws-toolbar {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ws-zoom,
+.ws-layers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+button.tool {
+  min-width: 2rem;
+  padding: 0.2rem 0.55rem;
+  background: var(--sheet);
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+.zoom-level {
+  min-width: 3.4rem;
+  text-align: center;
+  color: var(--graphite);
+  font-size: var(--step--1);
+}
+
+button.layer {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  padding: 0.2rem 0.55rem;
+  background: transparent;
+  color: var(--graphite);
+  border-color: var(--rule);
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: var(--step--1);
+}
+
+button.layer[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--sheet);
+}
+
+.layer-count {
+  font-weight: 700;
+}
+
+.ws-canvas {
+  position: relative;
+  min-height: 0;
+  margin: 0.75rem;
   background: var(--sheet);
   border: 1px solid var(--rule);
+  overflow: hidden;
 }
 
-.sheet-field svg {
+.ws-canvas > svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: auto;
-  display: block;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
 }
 
-.sheet-field svg * {
+.ws-canvas > svg:active {
+  cursor: grabbing;
+}
+
+.ws-canvas svg * {
   vector-effect: non-scaling-stroke;
 }
 
+.ws-title {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 2.2rem;
+  max-width: calc(100% - 1.5rem);
+}
+
+.ws-readout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  background: color-mix(in srgb, var(--sheet) 88%, transparent);
+  border-top: 1px solid var(--rule);
+  color: var(--graphite);
+  font-size: var(--step--1);
+  pointer-events: none;
+}
+
+.error-text {
+  color: var(--redline);
+}
+
+.viewer3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.paper {
+  fill: var(--sheet);
+}
+
+.scan-image {
+  opacity: 0.55;
+}
+
+.read-box {
+  fill: var(--trace-wash);
+  stroke: var(--trace);
+  stroke-width: 0.8;
+  opacity: 0.55;
+}
+
+.feature-mark {
+  cursor: pointer;
+}
+
+.feature-mark rect {
+  /* Transparent, not none: the whole marker area takes the click. */
+  fill: transparent;
+  stroke: var(--trace);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 3;
+}
+
+.feature-mark text {
+  fill: var(--trace);
+  font-family: var(--display);
+  font-weight: 700;
+}
+
+.feature-mark:hover rect,
+.feature-mark.on rect {
+  stroke-width: 2.4;
+  stroke-dasharray: none;
+  fill: var(--trace-wash);
+  fill-opacity: 0.35;
+}
+
+.hole-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* Drawing entities */
 .frame-outer,
 .frame-inner {
   fill: none;
@@ -379,14 +626,14 @@ input {
 
 /* Title block: the sheet's run record, set like a drawing title block. */
 .title-block {
-  align-self: flex-end;
-  margin: 0 1rem 1rem;
+  margin: 0;
   border-collapse: collapse;
   background: var(--sheet);
   border: 2px solid var(--ink);
   font-size: var(--step--1);
   min-width: 22rem;
-  max-width: calc(100% - 2rem);
+  max-width: 100%;
+  box-shadow: 0 0 0 4px var(--sheet);
 }
 
 .title-block td {
@@ -803,17 +1050,28 @@ summary {
 /* Event log */
 .log {
   border-top: 1px solid var(--rule);
-  padding: 0.6rem 1.25rem 0.8rem;
-  max-height: 9.5rem;
+  padding: 0.4rem 1.25rem;
+  background: var(--sheet);
+}
+
+.log summary {
+  cursor: pointer;
+  font-family: var(--display);
+  font-weight: 600;
+}
+
+.log-count {
+  color: var(--graphite);
+  font-weight: 400;
+}
+
+.log[open] {
+  max-height: 12rem;
   overflow-y: auto;
 }
 
-.log h2 {
-  font-size: var(--step-0);
-}
-
 .log ol {
-  margin: 0;
+  margin: 0.4rem 0 0;
   padding-left: 2.25rem;
   font-size: var(--step--1);
   columns: 3 18rem;
@@ -833,15 +1091,38 @@ summary {
   margin-right: 0.5rem;
 }
 
-@media (max-width: 70rem) {
+@media (max-width: 80rem) {
   .workspace {
-    grid-template-columns: 15.5rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 21rem;
+  }
+
+  .runs {
+    display: none;
+  }
+}
+
+@media (max-width: 60rem) {
+  .app {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workspace-pane {
+    height: 70vh;
   }
 
   .side {
-    grid-column: 1 / -1;
     border-left: 0;
     border-top: 1px solid var(--rule);
+  }
+
+  .panel {
+    overflow: visible;
   }
 }
 
@@ -849,33 +1130,8 @@ summary {
   /* On phones the page scrolls instead of fitting the viewport. */
   html,
   body,
-  #root,
-  .app {
+  #root {
     height: auto;
-  }
-
-  .workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .log {
-    max-height: none;
-  }
-
-  .pipeline {
-    border-right: 0;
-    border-bottom: 1px solid var(--rule);
-    min-height: 34rem;
-  }
-
-  .sheet {
-    padding: 0.5rem;
-  }
-
-  .title-block {
-    margin: 0.5rem;
-    min-width: 0;
-    align-self: stretch;
   }
 
   .masthead {
@@ -885,6 +1141,15 @@ summary {
   .controls select {
     flex: 1 1 100%;
     max-width: 100%;
+  }
+
+  .pipeline {
+    height: 4rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .ws-title {
+    display: none;
   }
 }
 
